@@ -1,0 +1,11 @@
+# local configuration; contains private information
+configuration.xml
+
+# Eclipse
+bin/
+.settings/
+.classpath
+.project
+
+# package files
+*.jar
