@@ -15,8 +15,18 @@ public class FocusedCellRenderer extends DefaultTableCellRenderer {
 	
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    	if(column == 1) {					// game system column
+    		setForeground(Color.GRAY);
+    	} else if(column == 2) {			// percentage column
+    		setForeground(Color.GREEN);
+    	} else {							// set no color; relies on the super call picking up the default
+    		setForeground(null); 
+    	}
+    	
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        
         setBorder(getNoFocusBorder());
+        
         return this;
     }
     

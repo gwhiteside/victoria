@@ -1,86 +1,40 @@
 package net.georgewhiteside.victoria;
 
-import info.puneetsingh.fsm.TextBrew;
-
-import java.awt.EventQueue;
-
 import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.ComboBoxModel;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
 import javax.swing.JScrollPane;
-import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
-import javax.swing.ListModel;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-
-import java.awt.BorderLayout;
 
 import javax.swing.JTextField;
 
-import java.awt.FlowLayout;
-
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
 
-import javax.swing.JComboBox;
-import javax.swing.JList;
-import javax.swing.AbstractListModel;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.DocumentFilter;
-import javax.swing.text.Position;
-import javax.swing.text.DocumentFilter.FilterBypass;
 
-import org.apache.lucene.search.spell.JaroWinklerDistance;
-import org.apache.lucene.search.spell.LevenshteinDistance;
-import org.apache.lucene.search.spell.NGramDistance;
-import org.apache.lucene.search.spell.StringDistance;
+import org.simmetrics.StringMetric;
+import org.simmetrics.metrics.JaroWinkler;
+import org.simmetrics.metrics.Levenshtein;
+import org.simmetrics.metrics.SimonWhite;
+import org.simmetrics.metrics.StringMetrics;
+import org.simmetrics.simplifiers.Simplifiers;
+import org.simmetrics.builders.StringMetricBuilder;
 
 import com.ebay.services.client.ClientConfig;
 import com.ebay.services.client.FindingServiceClientFactory;
 import com.ebay.services.finding.FindCompletedItemsRequest;
 import com.ebay.services.finding.FindCompletedItemsResponse;
-import com.ebay.services.finding.FindItemsAdvancedRequest;
-import com.ebay.services.finding.FindItemsAdvancedResponse;
-import com.ebay.services.finding.FindItemsByKeywordsRequest;
-import com.ebay.services.finding.FindItemsByKeywordsResponse;
 import com.ebay.services.finding.FindingServicePortType;
 import com.ebay.services.finding.PaginationInput;
 
@@ -92,12 +46,11 @@ import java.awt.Insets;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.JPanel;
-import javax.swing.JCheckBox;
 import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
 
+/*
 // https://github.com/tdebatty/java-string-similarity
 // https://github.com/apache/lucene-solr/tree/lucene_solr_5_3_1/lucene/suggest/src/java/org/apache/lucene/search/spell
 // http://www.csse.monash.edu.au/~lloyd/tildeAlgDS/Dynamic/Edit/
@@ -116,6 +69,8 @@ import javax.swing.border.EmptyBorder;
 
 // The longest common subsequence (LCS) of two sequences, s1 and s2, is a subsequence
 // of both s1 and of s2 of maximum possible length. The more alike that s1 and s2 are, the longer is their LCS.
+ * 
+ */
 
 public class MainWindow {
 	private String EBAY_CAT_VIDEO_GAMES = "139973";
@@ -128,6 +83,7 @@ public class MainWindow {
 	private JTable tableSelected;
 	
 	private List<VideoGame> videoGames;
+	private StringMetric stringMetric;
 
 	/**
 	 * Create the application.
@@ -140,6 +96,12 @@ public class MainWindow {
 		String dbPass = config.getProperty(Config.DB_PASS);
 		
 		VideoGameDatabase vgDatabase = new VideoGameDatabase(dbUrl, dbUser, dbPass);
+		
+		//stringMetric = new Levenshtein();
+		stringMetric = StringMetricBuilder
+			.with(new JaroWinkler())
+			.simplify(Simplifiers.toLowerCase())
+			.build();
 		
 		initialize();
 		videoGames = vgDatabase.getProducts();
@@ -370,7 +332,8 @@ public class MainWindow {
 		}
 		
 		long startTime = System.nanoTime();
-		List<VideoGameMatch> autocomplete = searchEnhanced(query, videoGames);
+		List<VideoGameMatch> autocomplete = searchSimMetrics(query, videoGames); //searchEnhanced(query, videoGames);
+		
 		long endTime = (System.nanoTime() - startTime) / 1000000;
 		System.out.println("" + endTime + " ms");
 		
@@ -379,7 +342,12 @@ public class MainWindow {
 			if(limit-- <= 0) {
 				break;
 			}
-			model.addRow(vgm.getVideoGame());
+			
+			//model.addRow(vgm.getVideoGame());
+			
+			// TODO temporary code while testing
+			VideoGame vg = vgm.getVideoGame();
+			model.addRow(new VideoGame(vg.getId(), String.format("%.3f", vgm.getScore()) + " " + vg.getTitle(), vg.getSystemId(), vg.getSystemName(), vg.getYear(), vg.getRegion()));
 		}
 		
 		if(tableSearch.getRowCount() > 0) {
@@ -415,49 +383,27 @@ public class MainWindow {
 	
 	
 	
-	private List<VideoGameMatch> searchEnhanced(String text, List<VideoGame> videoGameList) {	
-		SortedSet<VideoGameMatch> firstPass = searchTest(text, videoGameList);
+	private List<VideoGameMatch> searchSimMetrics(String text, List<VideoGame> videoGameList) {
+		List<VideoGameMatch> matches = new ArrayList<VideoGameMatch>();
 		
-		List<VideoGameMatch> secondPass = new ArrayList<VideoGameMatch>();
+		// good results with a Smith-Waterman metric
 		
-		float matchCutoff = Math.min((text.length() + 1) * 0.05f, 0.5f);
+		//float matchCutoff = Math.min((text.length() + 1) * 0.05f, 0.5f);
+		float matchCutoff = 0.75f;
 		
-		int limit = Integer.MAX_VALUE; //100;
-		for(Iterator<VideoGameMatch> it = firstPass.iterator(); it.hasNext() && limit > 0; limit--) {
-			VideoGameMatch vgm = it.next();
-			if(vgm.getScore() < matchCutoff) {
-				continue;
+		for(VideoGame vg : videoGameList) {
+			float score = stringMetric.compare(text, vg.getTitle());
+			if(score >= matchCutoff) {
+				matches.add(new VideoGameMatch(vg, score));
 			}
-			SmithWaterman sw = new SmithWaterman(text, vgm.getVideoGame().getTitle());
-			vgm.setScore(sw.computeSmithWaterman());
-			secondPass.add(vgm);
 		}
 		
-		//Collections.sort(secondPass, Collections.reverseOrder());
+		Collections.sort(matches, Collections.reverseOrder());
 		
-		return secondPass;
+		return matches;
 	}
 	
-	private SortedSet<VideoGameMatch> searchTest(String text, List<VideoGame> videoGameList) {
-		// TODO optimize this by pruning the initial result set, try adding to an array and sorting at the end, etc.
-		
-		StringDistance editDistance = new LevenshteinDistance();
-		//StringDistance editDistance = new NGramDistance(3);
-		
-		SortedSet<VideoGameMatch> videoGameAutocomplete = new TreeSet<VideoGameMatch>(); // Collections.reverseOrder()
-		for(VideoGame vg : videoGameList) {
-			
-			String queryString = text.toLowerCase();
-			String matchString = vg.getTitle().toLowerCase();
-			
-			float score = editDistance.getDistance(queryString, matchString);
-			
-			//score += StringUtils.getFuzzyDistance(matchString, queryString, Locale.US);
-			videoGameAutocomplete.add(new VideoGameMatch(vg, score));
-		}
-		
-		return videoGameAutocomplete;
-	}
+	
 	
 	private void cleanup() {
 		
