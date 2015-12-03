@@ -22,6 +22,8 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.DocumentFilter;
 
+import net.georgewhiteside.victoria.tables.PriceRow;
+import net.georgewhiteside.victoria.tables.PriceTableModel;
 import net.georgewhiteside.victoria.tables.SearchRow;
 import net.georgewhiteside.victoria.tables.SearchTableModel;
 
@@ -71,6 +73,7 @@ import javax.swing.border.EmptyBorder;
  * 
  */
 
+@SuppressWarnings("serial")
 public class MainWindow {
 	private String EBAY_CAT_VIDEO_GAMES = "139973";
 	
@@ -193,9 +196,7 @@ public class MainWindow {
 		textSearch.getInputMap().put(keyStrokeEnter, "enter");
 		textSearch.getActionMap().put("enter", new AbstractAction() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				autocompleteSelect();
-			}
+			public void actionPerformed(ActionEvent e) { autocompleteSelect(); }
 		});
 		
 		GridBagConstraints gbc_textSearch = new GridBagConstraints();
@@ -228,7 +229,7 @@ public class MainWindow {
 		tableSelected = new JTable();
 		tableSelected.setFillsViewportHeight(true);
 		setTableProperties(tableSelected);
-		tableSelected.setModel(new SearchTableModel());
+		tableSelected.setModel(new PriceTableModel());
 		tableSelected.setTableHeader(null);
 		JScrollPane scrollSelected = new JScrollPane(tableSelected);
 		
@@ -252,16 +253,6 @@ public class MainWindow {
 		gbc_labelTotal.gridx = 1;
 		gbc_labelTotal.gridy = 2;
 		panel.add(labelTotal, gbc_labelTotal);
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
 	}
 	
 	private void setTableProperties(JTable table) {
@@ -281,19 +272,11 @@ public class MainWindow {
 			return;
 		}
 		
-		/*
-		@SuppressWarnings("unchecked")
-		AdvancedTableModel<VideoGameMatch> atm = (AdvancedTableModel<VideoGameMatch>) tableSearch.getModel();
-		VideoGameMatch vgm = atm.getElementAt(selectedRow);
-		VideoGame vg = vgm.getVideoGame();
-		*/
-		
 		SearchTableModel searchModel = (SearchTableModel) tableSearch.getModel();
-		//System.out.println(vgtm.getVideoGameAt(selectedRow));
-		VideoGame vg = searchModel.getVideoGameAt(selectedRow);
+		VideoGame vg = searchModel.getVideoGameByRow(selectedRow);
 		
-		SearchTableModel selectedModel = (SearchTableModel) tableSelected.getModel();
-		selectedModel.addRow(vg);
+		PriceTableModel priceModel = (PriceTableModel) tableSelected.getModel();
+		priceModel.addRow(new PriceRow(vg, null));
 		
 		textSearch.setText(""); // automatically clears the tableSearch model
 		
@@ -338,12 +321,12 @@ public class MainWindow {
 		System.out.println("" + endTime + " ms");
 		
 		int limit = Integer.MAX_VALUE;
-		for(SearchRow vgm : autocomplete) {
+		for(SearchRow result : autocomplete) {
 			if(limit-- <= 0) {
 				break;
 			}
 			
-			model.addRow(vgm.getVideoGame());
+			model.addRow(result);
 			
 			// TODO temporary code while testing
 			//VideoGame vg = vgm.getVideoGame();

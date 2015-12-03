@@ -19,24 +19,18 @@ public class FocusedCellRenderer extends DefaultTableCellRenderer {
     		setForeground(Color.GRAY);
     	} else if(column == 2) {			// percentage column
     		setForeground(Color.GREEN);
-    	} else {							// set no color; relies on the super call picking up the default
+    	} else {							// set no color; let the super call pick up the default
     		setForeground(null); 
     	}
     	
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         
-        setBorder(getNoFocusBorder());
+        Border border = UIManager.getBorder("Table.cellNoFocusBorder");
+    	if(border == null) {
+    		border = DEFAULT_NO_FOCUS_BORDER;
+    	}
+    	setBorder(border);
         
         return this;
-    }
-    
-    private Border getNoFocusBorder() {
-    	Border border = UIManager.getBorder("Table.cellNoFocusBorder");
-    	
-    	if(border == null) {
-    		return DEFAULT_NO_FOCUS_BORDER;
-    	}
-    	
-    	return border;
     }
 }

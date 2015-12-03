@@ -11,5 +11,5 @@ public class PriceRow {
 		price = p;
 	}
 	
-	VideoGame getVideoGame() { return videoGame; }
+	public VideoGame getVideoGame() { return videoGame; }
 }

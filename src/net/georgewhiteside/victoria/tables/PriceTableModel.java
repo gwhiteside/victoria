@@ -1,6 +1,5 @@
 package net.georgewhiteside.victoria.tables;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,19 +8,17 @@ import javax.swing.table.AbstractTableModel;
 import net.georgewhiteside.victoria.VideoGame;
 
 @SuppressWarnings("serial")
-public class SearchTableModel extends AbstractTableModel {
+public class PriceTableModel extends AbstractTableModel {
 	
 	final String TITLE = "Title";
 	final String SYSTEM = "System";
-	final String SCORE = "Match";
+	final String PRICE = "Price";
 	
-	List<SearchRow> rowData;
-	String[] columnLabels = {TITLE, SYSTEM, SCORE};
+	List<PriceRow> rowData;
+	String[] columnLabels = {TITLE, SYSTEM, PRICE};
 	
-	NumberFormat percentage = NumberFormat.getPercentInstance();
-	
-	public SearchTableModel() {
-		rowData = new ArrayList<SearchRow>();
+	public PriceTableModel() {
+		rowData = new ArrayList<PriceRow>();
 	}
 
 	@Override
@@ -46,17 +43,17 @@ public class SearchTableModel extends AbstractTableModel {
 
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
-		SearchRow searchRow = rowData.get(rowIndex);
-		VideoGame vg = searchRow.getVideoGame();
+		PriceRow priceRow = rowData.get(rowIndex);
+		VideoGame vg = priceRow.getVideoGame();
 		switch(columnLabels[columnIndex]) {
 			case TITLE: return vg.getTitle();
 			case SYSTEM: return vg.getSystemName();
-			case SCORE: return percentage.format(searchRow.getScore());
+			case PRICE: return "PRICE";
 		}
 		return null;
 	}
 	
-	public SearchRow getRow(int index) {
+	public PriceRow getRow(int index) {
 		return rowData.get(index);
 	}
 	
@@ -72,13 +69,13 @@ public class SearchTableModel extends AbstractTableModel {
 		}
 	}
 	
-	public void addRow(SearchRow searchRow) {
-		insertRow(getRowCount(), searchRow);
+	public void addRow(PriceRow priceRow) {
+		insertRow(getRowCount(), priceRow);
 	}
 
-	public void insertRow(int index, SearchRow searchRow) {
+	public void insertRow(int index, PriceRow priceRow) {
 		// something something asynchronously load data
-		rowData.add(index, searchRow);
+		rowData.add(index, priceRow);
 		fireTableRowsInserted(index, index);
 	}
 	

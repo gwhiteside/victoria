@@ -11,7 +11,7 @@ public class SearchRow implements Comparable<SearchRow> {
 		this.score = score;
 	}
 	
-	public double getScore() { return score; }
+	public float getScore() { return score; }
 	
 	public VideoGame getVideoGame() { return videoGame; }
 	
