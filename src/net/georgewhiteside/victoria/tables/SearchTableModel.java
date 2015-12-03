@@ -1,16 +1,21 @@
-package net.georgewhiteside.victoria;
+package net.georgewhiteside.victoria.tables;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
-public class VideoGameTableModel extends AbstractTableModel {
+import net.georgewhiteside.victoria.VideoGame;
 
-	List<VideoGame> rowData;
-	String[] columnLabels = {"Title", "System"};
+public class SearchTableModel extends AbstractTableModel {
 	
-	public VideoGameTableModel() {
+	final String TITLE = "Title";
+	final String SYSTEM = "System";
+	
+	List<VideoGame> rowData;
+	String[] columnLabels = {TITLE, SYSTEM};
+	
+	public SearchTableModel() {
 		rowData = new ArrayList<VideoGame>();
 	}
 
@@ -27,8 +32,8 @@ public class VideoGameTableModel extends AbstractTableModel {
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
 		switch(columnLabels[columnIndex]) {
-			case "Title": return String.class;
-			case "System": return String.class;
+			case TITLE: return String.class;
+			case SYSTEM: return String.class;
 		}
         return Object.class;
     }
@@ -42,8 +47,8 @@ public class VideoGameTableModel extends AbstractTableModel {
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		VideoGame vg = rowData.get(rowIndex);
 		switch(columnLabels[columnIndex]) {
-			case "Title": return vg.getTitle();
-			case "System": return vg.getSystemName();
+			case TITLE: return vg.getTitle();
+			case SYSTEM: return vg.getSystemName();
 		}
 		return null;
 	}
@@ -65,6 +70,7 @@ public class VideoGameTableModel extends AbstractTableModel {
 	}
 
 	public void insertRow(int row, VideoGame vg) {
+		// something something asynchronously load data
 		rowData.add(row, vg);
 		fireTableRowsInserted(row, row);
 	}

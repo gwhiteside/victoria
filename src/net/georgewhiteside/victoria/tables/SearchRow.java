@@ -1,10 +1,12 @@
-package net.georgewhiteside.victoria;
+package net.georgewhiteside.victoria.tables;
 
-public class VideoGameMatch implements Comparable<VideoGameMatch> {
+import net.georgewhiteside.victoria.VideoGame;
+
+public class SearchRow implements Comparable<SearchRow> {
 	private float score;
 	private final VideoGame videoGame;
 	
-	public VideoGameMatch(VideoGame videoGame, float score) {
+	public SearchRow(VideoGame videoGame, float score) {
 		this.videoGame = videoGame;
 		this.score = score;
 	}
@@ -16,13 +18,12 @@ public class VideoGameMatch implements Comparable<VideoGameMatch> {
 	public void setScore(float value) { score = value; }
 
 	@Override
-	public int compareTo(VideoGameMatch o) {
-		VideoGameMatch thisGame = this;
-		VideoGameMatch thatGame = o;
+	public int compareTo(SearchRow o) {
+		SearchRow thisGame = this;
+		SearchRow thatGame = o;
 		
 		// two VideoGames could have the same match score but still be distinct set items;
 		// so if the score is equal, fall back to the guaranteed-unique db primary key
-		// comparator is reversed so the SortedSet iterator gives matches best-to-worst (or right-side correct for Levenshtein )
 
 		if(thisGame.equals(thatGame)) {
 			return 0;

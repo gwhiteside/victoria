@@ -1,5 +1,5 @@
 package net.georgewhiteside.victoria;
 
-public class VideoGamePrice {
+public class VideoGameSale {
 
 }

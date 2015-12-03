@@ -5,7 +5,6 @@ import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
-
 import javax.swing.JTextField;
 
 import java.awt.Dimension;
@@ -23,11 +22,11 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.DocumentFilter;
 
+import net.georgewhiteside.victoria.tables.SearchRow;
+import net.georgewhiteside.victoria.tables.SearchTableModel;
+
 import org.simmetrics.StringMetric;
 import org.simmetrics.metrics.JaroWinkler;
-import org.simmetrics.metrics.Levenshtein;
-import org.simmetrics.metrics.SimonWhite;
-import org.simmetrics.metrics.StringMetrics;
 import org.simmetrics.simplifiers.Simplifiers;
 import org.simmetrics.builders.StringMetricBuilder;
 
@@ -82,7 +81,7 @@ public class MainWindow {
 	private JTable tableSearch;
 	private JTable tableSelected;
 	
-	private List<VideoGame> videoGames;
+	private VideoGameDatabase vgDatabase;
 	private StringMetric stringMetric;
 
 	/**
@@ -95,16 +94,15 @@ public class MainWindow {
 		String dbUser = config.getProperty(Config.DB_USER);
 		String dbPass = config.getProperty(Config.DB_PASS);
 		
-		VideoGameDatabase vgDatabase = new VideoGameDatabase(dbUrl, dbUser, dbPass);
+		vgDatabase = new VideoGameDatabase(dbUrl, dbUser, dbPass);
 		
-		//stringMetric = new Levenshtein();
 		stringMetric = StringMetricBuilder
 			.with(new JaroWinkler())
 			.simplify(Simplifiers.toLowerCase())
 			.build();
 		
 		initialize();
-		videoGames = vgDatabase.getProducts();
+		
 		frame.setVisible(true);
 		
 		//ebayTest();
@@ -212,7 +210,7 @@ public class MainWindow {
 		tableSearch = new JTable();
 		tableSearch.setFillsViewportHeight(true);
 		setTableProperties(tableSearch);
-		tableSearch.setModel(new VideoGameTableModel());
+		tableSearch.setModel(new SearchTableModel());
 		tableSearch.setTableHeader(null);
 		JScrollPane scrollSearch = new JScrollPane(tableSearch);
 		
@@ -230,7 +228,7 @@ public class MainWindow {
 		tableSelected = new JTable();
 		tableSelected.setFillsViewportHeight(true);
 		setTableProperties(tableSelected);
-		tableSelected.setModel(new VideoGameTableModel());
+		tableSelected.setModel(new SearchTableModel());
 		tableSelected.setTableHeader(null);
 		JScrollPane scrollSelected = new JScrollPane(tableSelected);
 		
@@ -290,14 +288,16 @@ public class MainWindow {
 		VideoGame vg = vgm.getVideoGame();
 		*/
 		
-		VideoGameTableModel searchModel = (VideoGameTableModel) tableSearch.getModel();
+		SearchTableModel searchModel = (SearchTableModel) tableSearch.getModel();
 		//System.out.println(vgtm.getVideoGameAt(selectedRow));
 		VideoGame vg = searchModel.getVideoGameAt(selectedRow);
 		
-		VideoGameTableModel selectedModel = (VideoGameTableModel) tableSelected.getModel();
+		SearchTableModel selectedModel = (SearchTableModel) tableSelected.getModel();
 		selectedModel.addRow(vg);
 		
 		textSearch.setText(""); // automatically clears the tableSearch model
+		
+		System.out.println(vgDatabase.getSearchQuery(vg));
 	}
 	
 	
@@ -324,7 +324,7 @@ public class MainWindow {
 	
 	
 	private void updateSearchResults(String query) {
-		VideoGameTableModel model = (VideoGameTableModel) tableSearch.getModel();
+		SearchTableModel model = (SearchTableModel) tableSearch.getModel();
 		model.clear();
 		
 		if(query.length() == 0) {
@@ -332,22 +332,22 @@ public class MainWindow {
 		}
 		
 		long startTime = System.nanoTime();
-		List<VideoGameMatch> autocomplete = searchSimMetrics(query, videoGames); //searchEnhanced(query, videoGames);
+		List<SearchRow> autocomplete = searchSimMetrics(query, vgDatabase.getAllVideoGames());
 		
 		long endTime = (System.nanoTime() - startTime) / 1000000;
 		System.out.println("" + endTime + " ms");
 		
 		int limit = Integer.MAX_VALUE;
-		for(VideoGameMatch vgm : autocomplete) {
+		for(SearchRow vgm : autocomplete) {
 			if(limit-- <= 0) {
 				break;
 			}
 			
-			//model.addRow(vgm.getVideoGame());
+			model.addRow(vgm.getVideoGame());
 			
 			// TODO temporary code while testing
-			VideoGame vg = vgm.getVideoGame();
-			model.addRow(new VideoGame(vg.getId(), String.format("%.3f", vgm.getScore()) + " " + vg.getTitle(), vg.getSystemId(), vg.getSystemName(), vg.getYear(), vg.getRegion()));
+			//VideoGame vg = vgm.getVideoGame();
+			//model.addRow(new VideoGame(vg.getId(), String.format("%.3f", vgm.getScore()) + " " + vg.getTitle(), vg.getSystemId(), vg.getSystemName(), vg.getYear(), vg.getRegion()));
 		}
 		
 		if(tableSearch.getRowCount() > 0) {
@@ -383,8 +383,8 @@ public class MainWindow {
 	
 	
 	
-	private List<VideoGameMatch> searchSimMetrics(String text, List<VideoGame> videoGameList) {
-		List<VideoGameMatch> matches = new ArrayList<VideoGameMatch>();
+	private List<SearchRow> searchSimMetrics(String text, List<VideoGame> videoGameList) {
+		List<SearchRow> matches = new ArrayList<SearchRow>();
 		
 		// good results with a Smith-Waterman metric
 		
@@ -394,7 +394,7 @@ public class MainWindow {
 		for(VideoGame vg : videoGameList) {
 			float score = stringMetric.compare(text, vg.getTitle());
 			if(score >= matchCutoff) {
-				matches.add(new VideoGameMatch(vg, score));
+				matches.add(new SearchRow(vg, score));
 			}
 		}
 		

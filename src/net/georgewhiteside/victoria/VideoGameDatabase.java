@@ -10,20 +10,25 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.collect.ImmutableList;
+
 public class VideoGameDatabase {
 	
 	private String dbUrl;
 	private String dbUser;
 	private String dbPass;
+	
+	private List<VideoGame> videoGameList;
 
 	public VideoGameDatabase(String url, String user, String pass) {
 		dbUrl = url;
 		dbUser = user;
 		dbPass = pass;
+		
+		videoGameList = ImmutableList.copyOf(getAllVideoGamesFromDb());
 	}
 	
-	public List<VideoGame> getProducts() {
-		
+	private List<VideoGame> getAllVideoGamesFromDb() {
 		List<VideoGame> videoGames = new ArrayList<VideoGame>();
 		
 		try {
@@ -66,6 +71,18 @@ public class VideoGameDatabase {
 		return videoGames;
 	}
 	
+	public List<VideoGame> getAllVideoGames() {
+		return videoGameList;
+	}
+	
+	public void getPriceHistory(int videoGameId) {
+		
+	}
+	
+	public void getPriceHistory(VideoGame vg) {
+		getPriceHistory(vg.getId());
+	}
+	
 	public String getSearchQuery(int id) {
 		
 		String queryString = "";
@@ -82,8 +99,9 @@ public class VideoGameDatabase {
 			
 			ResultSet resultSet = statement.executeQuery();
 			
+			// TODO better to check for size 0, size 1, and size > 1; result should never be > 1
 			if(resultSet.first()) {
-				queryString = resultSet.getString("product_id");
+				queryString = resultSet.getString("query");
 			}
 			
 			resultSet.close();
