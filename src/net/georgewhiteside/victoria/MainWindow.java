@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -40,6 +42,8 @@ import com.ebay.services.finding.FindingServicePortType;
 import com.ebay.services.finding.PaginationInput;
 
 import java.awt.Component;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -72,6 +76,8 @@ import javax.swing.border.EmptyBorder;
 // of both s1 and of s2 of maximum possible length. The more alike that s1 and s2 are, the longer is their LCS.
  * 
  */
+
+// http://stackoverflow.com/questions/19012691/set-column-width-of-jtable-by-percentage
 
 @SuppressWarnings("serial")
 public class MainWindow {
@@ -209,10 +215,8 @@ public class MainWindow {
 		
 		
 		tableSearch = new JTable();
-		tableSearch.setFillsViewportHeight(true);
 		setTableProperties(tableSearch);
 		tableSearch.setModel(new SearchTableModel());
-		tableSearch.setTableHeader(null);
 		JScrollPane scrollSearch = new JScrollPane(tableSearch);
 		
 		GridBagConstraints gbc_scrollSearch = new GridBagConstraints();
@@ -224,13 +228,27 @@ public class MainWindow {
 		gbc_scrollSearch.gridy = 1;
 		panel.add(scrollSearch, gbc_scrollSearch);
 		
+		/* some quick (and brittle) search table sizing tweaks */
+		
+		FontMetrics fontMetrics = tableSearch.getFontMetrics(tableSearch.getFont());
+		Insets insets = FocusedCellRenderer.INSETS;
+		
+		TableColumn column = tableSearch.getColumnModel().getColumn(2);
+		int maxWidth = fontMetrics.stringWidth("100%");
+		column.setMinWidth(0);
+		column.setMaxWidth(insets.left + maxWidth + insets.right);
+		column.setPreferredWidth(column.getMaxWidth());
+		
+		column = tableSearch.getColumnModel().getColumn(1);
+		maxWidth = fontMetrics.stringWidth("Sega Master System"); // approximately the longest string in this column
+		column.setMinWidth(0);
+		column.setMaxWidth(insets.left + maxWidth + insets.right);
+		column.setPreferredWidth(column.getMaxWidth());
 		
 		
 		tableSelected = new JTable();
-		tableSelected.setFillsViewportHeight(true);
 		setTableProperties(tableSelected);
 		tableSelected.setModel(new PriceTableModel());
-		tableSelected.setTableHeader(null);
 		JScrollPane scrollSelected = new JScrollPane(tableSelected);
 		
 		GridBagConstraints gbc_scrollSelected = new GridBagConstraints();
@@ -256,10 +274,12 @@ public class MainWindow {
 	}
 	
 	private void setTableProperties(JTable table) {
+		table.setFillsViewportHeight(true);
 		table.setRowHeight(20);
 		table.setIntercellSpacing(new Dimension(0, 2));
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		table.setShowGrid(false);
+		table.setTableHeader(null);
 		table.setDefaultRenderer(Object.class, new FocusedCellRenderer()); // remove any annoying cell border giving a clean row selection
 	}
 	
