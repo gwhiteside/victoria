@@ -10,6 +10,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.georgewhiteside.utility.FileUtil;
+
 import com.google.common.collect.ImmutableList;
 
 public class VideoGameDatabase {
@@ -19,47 +21,34 @@ public class VideoGameDatabase {
 	private String dbPass;
 	
 	private List<VideoGame> videoGameList;
+	private int initialCapacity = 4000; // very minor optimization; set higher than number of products in database
 
 	public VideoGameDatabase(String url, String user, String pass) {
-		dbUrl = url;
-		dbUser = user;
-		dbPass = pass;
+		dbUrl	= url;
+		dbUser	= user;
+		dbPass	= pass;
 		
 		videoGameList = ImmutableList.copyOf(getAllVideoGamesFromDb());
 	}
 	
 	private List<VideoGame> getAllVideoGamesFromDb() {
-		List<VideoGame> videoGames = new ArrayList<VideoGame>();
+		List<VideoGame> videoGames = new ArrayList<VideoGame>(initialCapacity);
+		String query = FileUtil.loadTextResource("/res/get_video_games.sql");
 		
 		try {
-			long startTime = System.nanoTime();
-			
 			Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
 			Statement statement = connection.createStatement();
-			ResultSet resultSet = statement.executeQuery(
-				"SELECT product_id, title, product.year, product.region, system.system_id, system.name" + '\n' +
-				"FROM product" + '\n' +
-				"INNER JOIN system ON product.system_id = system.system_id;"
-			);
-			
-			long endTime = System.nanoTime() - startTime;
-			System.out.println("SQL query executed in: " + endTime / 1000000 + " ms");
-			
-			startTime = System.nanoTime();
+			ResultSet resultSet = statement.executeQuery(query);
 			
 			while(resultSet.next()) {
-				int productId = resultSet.getInt("product_id");
-				String title = resultSet.getString("title");
-				int systemId = resultSet.getInt("system_id");
-				String systemName = resultSet.getString("name");
-				int year = resultSet.getInt("year");
-				String region = resultSet.getString("region");
+				int productId		= resultSet.getInt("product_id");
+				String title		= resultSet.getString("title");
+				int systemId		= resultSet.getInt("system_id");
+				String systemName	= resultSet.getString("name");
+				int year			= resultSet.getInt("year");
+				String region		= resultSet.getString("region");
 				videoGames.add(new VideoGame(productId, title, systemId, systemName.intern(), year, region));
 			}
-			
-			endTime = System.nanoTime() - startTime;
-			System.out.println("Result data read in: " + endTime / 1000000 + " ms");
-			System.out.println("Result data array size: " + videoGames.size());
 			
 			resultSet.close();
 			statement.close();
@@ -75,8 +64,35 @@ public class VideoGameDatabase {
 		return videoGameList;
 	}
 	
-	public void getPriceHistory(int videoGameId) {
+	public List<VideoGameSale> getPriceHistory(int videoGameId) {
+		String query = FileUtil.loadTextResource("get_prices.sql");
+		List<VideoGameSale> list = new ArrayList<VideoGameSale>();
 		
+		try (
+		Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
+		Statement statement = connection.createStatement();
+		ResultSet resultSet = statement.executeQuery(query);
+		){
+			while(resultSet.next()) {
+				long id			= resultSet.getLong("");
+				int productId	= resultSet.getInt("");
+				long timestamp	= resultSet.getLong("timestamp");
+				int price		= resultSet.getInt("price");
+				list.add(new VideoGameSale(videoGameId, videoGameId, videoGameId, videoGameId));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return list;
+	}
+	
+	public List<VideoGameSale> getPriceHistoryRange(int videoGameId, long start, long end) {
+		List<VideoGameSale> list = new ArrayList<VideoGameSale>();
+		
+		
+		
+		return list;
 	}
 	
 	public void getPriceHistory(VideoGame vg) {
@@ -84,16 +100,12 @@ public class VideoGameDatabase {
 	}
 	
 	public String getSearchQuery(int id) {
-		
+		String query = FileUtil.loadTextResource("/res/get_search_query.sql");
 		String queryString = "";
 		
 		try {
 			Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
-			PreparedStatement statement = connection.prepareStatement(
-				"SELECT product_id, query" + '\n' +
-				"FROM search" + '\n' +
-				"WHERE product_id = ?;"
-			);
+			PreparedStatement statement = connection.prepareStatement(query);
 			
 			statement.setInt(1, id);
 			

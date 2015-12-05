@@ -10,7 +10,7 @@ import javax.swing.UIManager;
 
 // 350 characters per search; 99 characters per word ("word" defined as consecutive characters
 
-// BoneCP, c3p0, DBCP
+// HikariCP, BoneCP, c3p0, DBCP
 
 // TimeUnit
 

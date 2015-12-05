@@ -214,8 +214,7 @@ public class MainWindow {
 		
 		
 		
-		tableSearch = new JTable();
-		setTableProperties(tableSearch);
+		tableSearch = new JTableCustom();
 		tableSearch.setModel(new SearchTableModel());
 		JScrollPane scrollSearch = new JScrollPane(tableSearch);
 		
@@ -228,26 +227,9 @@ public class MainWindow {
 		gbc_scrollSearch.gridy = 1;
 		panel.add(scrollSearch, gbc_scrollSearch);
 		
-		/* some quick (and brittle) search table sizing tweaks */
-		
-		FontMetrics fontMetrics = tableSearch.getFontMetrics(tableSearch.getFont());
-		Insets insets = FocusedCellRenderer.INSETS;
-		
-		TableColumn column = tableSearch.getColumnModel().getColumn(2);
-		int maxWidth = fontMetrics.stringWidth("100%");
-		column.setMinWidth(0);
-		column.setMaxWidth(insets.left + maxWidth + insets.right);
-		column.setPreferredWidth(column.getMaxWidth());
-		
-		column = tableSearch.getColumnModel().getColumn(1);
-		maxWidth = fontMetrics.stringWidth("Sega Master System"); // approximately the longest string in this column
-		column.setMinWidth(0);
-		column.setMaxWidth(insets.left + maxWidth + insets.right);
-		column.setPreferredWidth(column.getMaxWidth());
 		
 		
-		tableSelected = new JTable();
-		setTableProperties(tableSelected);
+		tableSelected = new JTableCustom();
 		tableSelected.setModel(new PriceTableModel());
 		JScrollPane scrollSelected = new JScrollPane(tableSelected);
 		
@@ -273,16 +255,6 @@ public class MainWindow {
 		panel.add(labelTotal, gbc_labelTotal);
 	}
 	
-	private void setTableProperties(JTable table) {
-		table.setFillsViewportHeight(true);
-		table.setRowHeight(20);
-		table.setIntercellSpacing(new Dimension(0, 2));
-		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		table.setShowGrid(false);
-		table.setTableHeader(null);
-		table.setDefaultRenderer(Object.class, new FocusedCellRenderer()); // remove any annoying cell border giving a clean row selection
-	}
-	
 	
 	
 	private void autocompleteSelect() {
@@ -296,7 +268,7 @@ public class MainWindow {
 		VideoGame vg = searchModel.getVideoGameByRow(selectedRow);
 		
 		PriceTableModel priceModel = (PriceTableModel) tableSelected.getModel();
-		priceModel.addRow(new PriceRow(vg, null));
+		priceModel.addRow(vg);
 		
 		textSearch.setText(""); // automatically clears the tableSearch model
 		
