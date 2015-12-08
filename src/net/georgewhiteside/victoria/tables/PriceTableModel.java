@@ -7,6 +7,7 @@ import java.util.Formatter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
@@ -99,8 +100,12 @@ public class PriceTableModel extends AbstractTableModel {
 		
 		final Timer timer = new Timer(delay, new ActionListener() {
 		    public void actionPerformed(ActionEvent evt) {
-		    	long timestamp = database.getLastUpdateTimestamp(priceRow.getVideoGame());
-		    	priceRow.setPrice("checking... " + timestamp);
+		    	long period = database.getSecondsSinceUpdate(priceRow.getVideoGame());
+		    	long daysSinceUpdate = TimeUnit.SECONDS.toDays(period);
+		    	if(daysSinceUpdate > 7) {
+		    		// do an update
+		    	}
+		    	priceRow.setPrice("checking... " + daysSinceUpdate);
 		    	firePriceUpdated(priceRow);
 		    }    
 		});
