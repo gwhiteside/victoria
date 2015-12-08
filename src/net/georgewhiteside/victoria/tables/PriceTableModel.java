@@ -13,6 +13,7 @@ import javax.swing.Timer;
 import javax.swing.table.AbstractTableModel;
 
 import net.georgewhiteside.victoria.VideoGame;
+import net.georgewhiteside.victoria.VideoGameDatabase;
 
 // what I should be doing is (in parallel to the rowData list) tracking these pricerows in a set (or videogame -> price in a map)
 // 
@@ -28,9 +29,11 @@ public class PriceTableModel extends AbstractTableModel {
 	String[] columnLabels = {TITLE, SYSTEM, PRICE};
 	
 	Random random = new Random();
+	VideoGameDatabase database;
 	
-	public PriceTableModel() {
+	public PriceTableModel(VideoGameDatabase vgDatabase) {
 		rowData = new ArrayList<PriceRow>();
+		database = vgDatabase;
 	}
 
 	@Override
@@ -96,7 +99,8 @@ public class PriceTableModel extends AbstractTableModel {
 		
 		final Timer timer = new Timer(delay, new ActionListener() {
 		    public void actionPerformed(ActionEvent evt) {
-		    	priceRow.setPrice("checking...");
+		    	long timestamp = database.getLastUpdateTimestamp(priceRow.getVideoGame());
+		    	priceRow.setPrice("checking... " + timestamp);
 		    	firePriceUpdated(priceRow);
 		    }    
 		});

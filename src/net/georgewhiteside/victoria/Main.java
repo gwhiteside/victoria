@@ -12,11 +12,11 @@ import javax.swing.UIManager;
 
 // HikariCP, BoneCP, c3p0, DBCP
 
-// TimeUnit
-
 // provide median and interquartile range
 
 // Calendar and TimeUnit
+
+// NumberFormat.getCurrencyInstance()
 
 public class Main {
 	public static void main(String[] args) throws IOException {

@@ -87,7 +87,7 @@ public class MainWindow {
 
 	private JFrame frame;
 	private JTextField textSearch;
-	private JTable tableSearch;
+	private JTableCustom tableSearch;
 	private JTable tableSelected;
 	
 	private VideoGameDatabase vgDatabase;
@@ -138,6 +138,8 @@ public class MainWindow {
 		
 		FindCompletedItemsResponse response = serviceClient.findCompletedItems(request);
 		
+		//response.getSearchResult().getItem().get(0).getListingInfo().getEndTime()
+		//response.getSearchResult().getItem().get(0).getSellingStatus().getConvertedCurrentPrice().
 		System.out.println("Ack = " + response.getAck());
 		System.out.println("Found " + response.getSearchResult().getCount() + " items");
 	}
@@ -230,7 +232,7 @@ public class MainWindow {
 		
 		
 		tableSelected = new JTableCustom();
-		tableSelected.setModel(new PriceTableModel());
+		tableSelected.setModel(new PriceTableModel(vgDatabase));
 		JScrollPane scrollSelected = new JScrollPane(tableSelected);
 		
 		GridBagConstraints gbc_scrollSelected = new GridBagConstraints();
@@ -292,7 +294,7 @@ public class MainWindow {
 			newRow = 0;
 		}
 		
-		tableSearch.setRowSelectionInterval(newRow, newRow);
+		tableSearch.setSelectedRow(newRow);
 		tableSearch.scrollRectToVisible(tableSearch.getCellRect(newRow, 0, true));
 	}
 	
@@ -319,14 +321,10 @@ public class MainWindow {
 			}
 			
 			model.addRow(result);
-			
-			// TODO temporary code while testing
-			//VideoGame vg = vgm.getVideoGame();
-			//model.addRow(new VideoGame(vg.getId(), String.format("%.3f", vgm.getScore()) + " " + vg.getTitle(), vg.getSystemId(), vg.getSystemName(), vg.getYear(), vg.getRegion()));
 		}
 		
 		if(tableSearch.getRowCount() > 0) {
-			tableSearch.setRowSelectionInterval(0, 0); // select the first item by default when typing a search string
+			tableSearch.setSelectedRow(0); // select the first item by default when typing a search string
 		}
 	}
 	

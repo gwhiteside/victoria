@@ -46,6 +46,10 @@ public class JTableCustom extends JTable
 	}
 	
 	public Insets getCellInsets() { return INSETS; }
+	
+	public void setSelectedRow(int index) {
+		setRowSelectionInterval(index, index);
+	}
 }
 
 /* some quick (and brittle) search table sizing tweaks 

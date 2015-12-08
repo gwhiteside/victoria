@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import net.georgewhiteside.utility.FileUtil;
 
@@ -64,8 +65,9 @@ public class VideoGameDatabase {
 		return videoGameList;
 	}
 	
+	/*
 	public List<VideoGameSale> getPriceHistory(int videoGameId) {
-		String query = FileUtil.loadTextResource("get_prices.sql");
+		String query = FileUtil.loadTextResource("/res/get_prices.sql");
 		List<VideoGameSale> list = new ArrayList<VideoGameSale>();
 		
 		try (
@@ -87,16 +89,46 @@ public class VideoGameDatabase {
 		return list;
 	}
 	
+	public void getPriceHistory(VideoGame vg) {
+		getPriceHistory(vg.getId());
+	}
+	
+	*/
+	
+	public long getLastUpdateTimestamp(VideoGame videoGame) {
+		String query = FileUtil.loadTextResource("/res/get_search_query.sql");
+		long timestamp = 0;
+		
+		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
+			PreparedStatement statement = connection.prepareStatement(query);) {
+			
+			statement.setInt(1, videoGame.getId());
+			
+			try(ResultSet resultSet = statement.executeQuery();) {
+				if(resultSet.first()) {
+					timestamp = resultSet.getLong("updated");
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return timestamp;
+	}
+	
+	public long getSecondsSinceUpdate(VideoGame videoGame) {
+		// TimeUnit.SECONDS
+		long updateUnixTime = getLastUpdateTimestamp(videoGame);
+		long currentUnixTime = System.currentTimeMillis() / 1000;
+		return currentUnixTime - updateUnixTime;
+	}
+	
 	public List<VideoGameSale> getPriceHistoryRange(int videoGameId, long start, long end) {
 		List<VideoGameSale> list = new ArrayList<VideoGameSale>();
 		
 		
 		
 		return list;
-	}
-	
-	public void getPriceHistory(VideoGame vg) {
-		getPriceHistory(vg.getId());
 	}
 	
 	public String getSearchQuery(int id) {
