@@ -54,6 +54,8 @@ import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
+import javax.swing.JTextPane;
+import javax.swing.ScrollPaneConstants;
 
 /*
 // https://github.com/tdebatty/java-string-similarity
@@ -216,6 +218,20 @@ public class MainWindow {
 		
 		
 		
+		JLabel labelTotal = new JLabel("$4.76");
+		labelTotal.setHorizontalAlignment(SwingConstants.RIGHT);
+		labelTotal.setAlignmentX(Component.CENTER_ALIGNMENT);
+		
+		GridBagConstraints gbc_labelTotal = new GridBagConstraints();
+		gbc_labelTotal.insets = new Insets(0, 0, 5, 0);
+		gbc_labelTotal.fill = GridBagConstraints.HORIZONTAL;
+		gbc_labelTotal.ipadx = 8;
+		gbc_labelTotal.gridx = 1;
+		gbc_labelTotal.gridy = 0;
+		panel.add(labelTotal, gbc_labelTotal);
+		
+		
+		
 		tableSearch = new JTableCustom();
 		tableSearch.setModel(new SearchTableModel());
 		JScrollPane scrollSearch = new JScrollPane(tableSearch);
@@ -242,19 +258,6 @@ public class MainWindow {
 		gbc_scrollSelected.gridx = 1;
 		gbc_scrollSelected.gridy = 1;
 		panel.add(scrollSelected, gbc_scrollSelected);
-		
-		
-		
-		JLabel labelTotal = new JLabel("$4.76");
-		labelTotal.setHorizontalAlignment(SwingConstants.RIGHT);
-		labelTotal.setAlignmentX(Component.CENTER_ALIGNMENT);
-		
-		GridBagConstraints gbc_labelTotal = new GridBagConstraints();
-		gbc_labelTotal.fill = GridBagConstraints.HORIZONTAL;
-		gbc_labelTotal.ipadx = 8;
-		gbc_labelTotal.gridx = 1;
-		gbc_labelTotal.gridy = 2;
-		panel.add(labelTotal, gbc_labelTotal);
 	}
 	
 	

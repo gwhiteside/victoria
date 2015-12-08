@@ -100,10 +100,15 @@ public class PriceTableModel extends AbstractTableModel {
 		
 		final Timer timer = new Timer(delay, new ActionListener() {
 		    public void actionPerformed(ActionEvent evt) {
-		    	long period = database.getSecondsSinceUpdate(priceRow.getVideoGame());
+		    	VideoGame vg = priceRow.getVideoGame();
+		    	long period = database.getSecondsSinceUpdate(vg);
 		    	long daysSinceUpdate = TimeUnit.SECONDS.toDays(period);
 		    	if(daysSinceUpdate > 7) {
-		    		// do an update
+		    		String searchString = database.getSearchQuery(vg);
+		    		System.out.println("search string length: " + searchString.length());
+		    		if(searchString.length() == 0) {
+		    			
+		    		}
 		    	}
 		    	priceRow.setPrice("checking... " + daysSinceUpdate);
 		    	firePriceUpdated(priceRow);
