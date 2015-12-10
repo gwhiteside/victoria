@@ -4,13 +4,15 @@ public class VideoGamePriceHistory {
 	private String dataUnavailable = "—"; // em dash
 	private String dataUpdating = "...";
 	
-	private VideoGame videoGame;
+	private VideoGameSale[] saleHistory;
 	
 	public VideoGamePriceHistory(VideoGame vg) {
-		videoGame = vg;
+		//videoGame = vg;
 	}
 	
 	// int getPriceAverage(period, averagefilter)
 	
 	// int[] getPriceRange
+	
+	
 }

@@ -12,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,6 +41,7 @@ import com.ebay.services.finding.FindCompletedItemsRequest;
 import com.ebay.services.finding.FindCompletedItemsResponse;
 import com.ebay.services.finding.FindingServicePortType;
 import com.ebay.services.finding.PaginationInput;
+import com.ebay.services.finding.SortOrderType;
 
 import java.awt.Component;
 import java.awt.FontMetrics;
@@ -54,8 +56,18 @@ import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.JTextArea;
+import javax.swing.UIManager;
+import javax.swing.JCheckBox;
+import javax.swing.JButton;
+
+import java.awt.FlowLayout;
+
+import javax.swing.JComboBox;
 
 /*
 // https://github.com/tdebatty/java-string-similarity
@@ -119,7 +131,7 @@ public class MainWindow {
 		//ebayTest();
 	}
 	
-	private void ebayTest() {
+	private void ebayTest(String searchString) {
 		ClientConfig clientConfig = new ClientConfig();
 		String ebayAppID = Config.getInstance().getProperty(Config.EBAY_APP_ID);
 		clientConfig.setApplicationId(ebayAppID);
@@ -128,7 +140,8 @@ public class MainWindow {
 		
 		FindCompletedItemsRequest request = new FindCompletedItemsRequest();
 		
-		request.setKeywords("`street fighter 2010`".replace('`', '"'));
+		request.setKeywords(searchString);
+		request.setSortOrder(SortOrderType.END_TIME_SOONEST);
 		request.getCategoryId().clear();
 		request.getCategoryId().add(EBAY_CAT_VIDEO_GAMES);
 		
@@ -173,9 +186,9 @@ public class MainWindow {
 		
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[] {100, 100, 0};
-		gridBagLayout.rowHeights = new int[] {20, 20, 20, 0};
-		gridBagLayout.columnWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
-		gridBagLayout.rowWeights = new double[]{0.0, 1.0, 0.0, Double.MIN_VALUE};
+		gridBagLayout.rowHeights = new int[] {20, 0, 20, 20, 0, 0};
+		gridBagLayout.columnWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
+		gridBagLayout.rowWeights = new double[]{0.0, 0.0, 1.0, 0.0, 0.0, Double.MIN_VALUE};
 		panel.setLayout(gridBagLayout);
 		
 		
@@ -216,18 +229,26 @@ public class MainWindow {
 		gbc_textSearch.gridy = 0;
 		panel.add(textSearch, gbc_textSearch);
 		
+		JComboBox comboBox = new JComboBox();
+		GridBagConstraints gbc_comboBox = new GridBagConstraints();
+		gbc_comboBox.insets = new Insets(0, 0, 5, 5);
+		gbc_comboBox.fill = GridBagConstraints.HORIZONTAL;
+		gbc_comboBox.gridx = 0;
+		gbc_comboBox.gridy = 1;
+		panel.add(comboBox, gbc_comboBox);
 		
 		
-		JLabel labelTotal = new JLabel("$4.76");
+		
+		final JLabel labelTotal = new JLabel("");
 		labelTotal.setHorizontalAlignment(SwingConstants.RIGHT);
 		labelTotal.setAlignmentX(Component.CENTER_ALIGNMENT);
 		
 		GridBagConstraints gbc_labelTotal = new GridBagConstraints();
 		gbc_labelTotal.insets = new Insets(0, 0, 5, 0);
-		gbc_labelTotal.fill = GridBagConstraints.HORIZONTAL;
+		gbc_labelTotal.fill = GridBagConstraints.BOTH;
 		gbc_labelTotal.ipadx = 8;
 		gbc_labelTotal.gridx = 1;
-		gbc_labelTotal.gridy = 0;
+		gbc_labelTotal.gridy = 1;
 		panel.add(labelTotal, gbc_labelTotal);
 		
 		
@@ -238,26 +259,46 @@ public class MainWindow {
 		
 		GridBagConstraints gbc_scrollSearch = new GridBagConstraints();
 		gbc_scrollSearch.weightx = 0.5;
-		gbc_scrollSearch.gridheight = 2;
-		gbc_scrollSearch.insets = new Insets(0, 0, 0, 5);
+		gbc_scrollSearch.insets = new Insets(0, 0, 5, 5);
 		gbc_scrollSearch.fill = GridBagConstraints.BOTH;
 		gbc_scrollSearch.gridx = 0;
-		gbc_scrollSearch.gridy = 1;
+		gbc_scrollSearch.gridy = 2;
 		panel.add(scrollSearch, gbc_scrollSearch);
 		
 		
 		
 		tableSelected = new JTableCustom();
-		tableSelected.setModel(new PriceTableModel(vgDatabase));
+		final PriceTableModel priceTableModel = new PriceTableModel(vgDatabase);
+		priceTableModel.addTableModelListener(new TableModelListener() {
+			NumberFormat format = NumberFormat.getCurrencyInstance();
+			@Override
+			public void tableChanged(TableModelEvent e) {
+				labelTotal.setText(format.format(priceTableModel.getPriceTotal()));
+			}
+		});
+		tableSelected.setModel(priceTableModel);
 		JScrollPane scrollSelected = new JScrollPane(tableSelected);
 		
 		GridBagConstraints gbc_scrollSelected = new GridBagConstraints();
+		gbc_scrollSelected.gridheight = 2;
 		gbc_scrollSelected.weightx = 0.5;
 		gbc_scrollSelected.fill = GridBagConstraints.BOTH;
 		gbc_scrollSelected.insets = new Insets(0, 0, 5, 0);
 		gbc_scrollSelected.gridx = 1;
-		gbc_scrollSelected.gridy = 1;
+		gbc_scrollSelected.gridy = 2;
 		panel.add(scrollSelected, gbc_scrollSelected);
+		
+		textField = new JTextField();
+		GridBagConstraints gbc_textField = new GridBagConstraints();
+		gbc_textField.gridwidth = 2;
+		gbc_textField.fill = GridBagConstraints.HORIZONTAL;
+		gbc_textField.gridx = 0;
+		gbc_textField.gridy = 4;
+		panel.add(textField, gbc_textField);
+		textField.setColumns(10);
+		
+		textSearch.addMouseListener(new ContextMenuMouseListener());
+		//textArea.setComponentPopupMenu(new BasicContextMenu());
 	}
 	
 	
@@ -356,6 +397,7 @@ public class MainWindow {
 			updateSearchResults(text);
 		}
 	};
+	private JTextField textField;
 	
 	
 	

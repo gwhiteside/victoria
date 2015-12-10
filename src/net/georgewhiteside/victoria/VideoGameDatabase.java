@@ -65,22 +65,24 @@ public class VideoGameDatabase {
 		return videoGameList;
 	}
 	
-	/*
-	public List<VideoGameSale> getPriceHistory(int videoGameId) {
+	
+	private List<VideoGameSale> getSales(int videoGameId) {
 		String query = FileUtil.loadTextResource("/res/get_prices.sql");
 		List<VideoGameSale> list = new ArrayList<VideoGameSale>();
 		
-		try (
-		Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
-		Statement statement = connection.createStatement();
-		ResultSet resultSet = statement.executeQuery(query);
-		){
-			while(resultSet.next()) {
-				long id			= resultSet.getLong("");
-				int productId	= resultSet.getInt("");
-				long timestamp	= resultSet.getLong("timestamp");
-				int price		= resultSet.getInt("price");
-				list.add(new VideoGameSale(videoGameId, videoGameId, videoGameId, videoGameId));
+		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
+			PreparedStatement statement = connection.prepareStatement(query);) {
+			
+			statement.setInt(1, videoGameId);
+			
+			try(ResultSet resultSet = statement.executeQuery(query);) {
+				while(resultSet.next()) {
+					long saleId		= resultSet.getLong("sale_id");
+					long timestamp	= resultSet.getLong("timestamp");
+					int price		= resultSet.getInt("price");
+					String title	= resultSet.getString("title");
+					list.add(new VideoGameSale(saleId, videoGameId, title, price, timestamp));
+				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -89,11 +91,9 @@ public class VideoGameDatabase {
 		return list;
 	}
 	
-	public void getPriceHistory(VideoGame vg) {
-		getPriceHistory(vg.getId());
+	public void getSales(VideoGame vg) {
+		getSales(vg.getId());
 	}
-	
-	*/
 	
 	public long getLastUpdateTimestamp(VideoGame videoGame) {
 		String query = FileUtil.loadTextResource("/res/get_search_query.sql");

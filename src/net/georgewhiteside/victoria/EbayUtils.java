@@ -54,4 +54,12 @@ public class EbayUtils
 		
 		return toCents(amount.getValue());
 	}
+	
+	public static VideoGameSale toVideoGameSale(SearchItem sale, int videoGameId) {
+			long saleId = Long.parseLong(sale.getItemId());
+			long timestamp = EbayUtils.getEndTimeUnix(sale);
+			int price = EbayUtils.getPriceWithShipping(sale);
+			String title = sale.getTitle();
+			return new VideoGameSale(saleId, videoGameId, title, price, timestamp);
+	}
 }

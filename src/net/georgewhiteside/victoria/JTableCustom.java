@@ -18,23 +18,24 @@ public class JTableCustom extends JTable
 	private static final Border BORDER = new EmptyBorder(INSETS);
 	
 	public JTableCustom() {
+		super();
 		setFillsViewportHeight(true);
 		//setRowHeight(20);
-		setIntercellSpacing(new Dimension(0, 2));
+		setIntercellSpacing(new Dimension(0, getIntercellSpacing().height));
 		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		setShowGrid(false);
 		setTableHeader(null);
 		setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
 		    @Override
 		    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-		    	if(column == 1) {					// game system column
+		    	/*if(column == 1) {					// game system column
 		    		setForeground(Color.GRAY);
 		    	} else if(column == 2) {			// percentage column
 		    		setForeground(Color.GREEN);
 		    		//value = "trololol";
 		    	} else {							// set no color; let the super call pick up the default
 		    		setForeground(null); 
-		    	}
+		    	}*/
 		    	
 		        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 		        

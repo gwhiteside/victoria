@@ -1,7 +1,5 @@
 package net.georgewhiteside.victoria;
 
-import com.ebay.services.finding.SearchItem;
-
 public class VideoGameSale {
 	private long saleId;
 	private int productId;
@@ -9,20 +7,12 @@ public class VideoGameSale {
 	private int price; 
 	private String title;
 	
-	public VideoGameSale(int id, int productId, String title, int price, long timestamp) {
-		this.saleId = id;
-		this.productId = productId;
+	public VideoGameSale(long saleId, int videoGameId, String title, int price, long timestamp) {
+		this.saleId = saleId;
+		this.productId = videoGameId;
 		this.title = title;
 		this.price = price;
 		this.timestamp = timestamp;
-	}
-	
-	public VideoGameSale(SearchItem sale, int id) {
-		saleId = Long.parseLong(sale.getItemId());
-		productId = id;
-		timestamp = EbayUtils.getEndTimeUnix(sale);
-		price = EbayUtils.getPriceWithShipping(sale);
-		title = sale.getTitle();
 	}
 	
 	public long getSaleId() { return saleId; }

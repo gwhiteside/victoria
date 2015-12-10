@@ -1,5 +1,6 @@
 package net.georgewhiteside.victoria.tables;
 
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -7,8 +8,10 @@ import java.util.Formatter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.table.AbstractTableModel;
@@ -64,17 +67,13 @@ public class PriceTableModel extends AbstractTableModel {
 		switch(columnLabels[columnIndex]) {
 			case TITLE: return vg.getTitle();
 			case SYSTEM: return vg.getSystemName();
-			case PRICE: return priceRow.getPrice();
+			case PRICE: return priceRow.getPriceColumnString();
 		}
 		return null;
 	}
 	
 	public PriceRow getRow(int index) {
 		return rowData.get(index);
-	}
-	
-	public VideoGame getVideoGameByRow(int index) {
-		return getRow(index).getVideoGame();
 	}
 	
 	public void clear() {
@@ -90,35 +89,33 @@ public class PriceTableModel extends AbstractTableModel {
 	}
 	
 	public void addRow(VideoGame vg) {
-		// do some background loading here
-		
-		final PriceRow priceRow = new PriceRow(vg, "");
+		PriceRow priceRow = new PriceRow(vg);
 		
 		addRow(priceRow);
 		
-		int delay = random.nextInt(5000 - 3000) + 2000;
-		
-		final Timer timer = new Timer(delay, new ActionListener() {
-		    public void actionPerformed(ActionEvent evt) {
-		    	VideoGame vg = priceRow.getVideoGame();
-		    	long period = database.getSecondsSinceUpdate(vg);
-		    	long daysSinceUpdate = TimeUnit.SECONDS.toDays(period);
-		    	if(daysSinceUpdate > 7) {
-		    		String searchString = database.getSearchQuery(vg);
-		    		System.out.println("search string length: " + searchString.length());
-		    		if(searchString.length() == 0) {
-		    			
-		    		}
-		    	}
-		    	priceRow.setPrice("checking... " + daysSinceUpdate);
-		    	firePriceUpdated(priceRow);
-		    }    
-		});
-		timer.setRepeats(false);
-		timer.start();
+		//new PriceRowUpdater(priceRow).execute();
 	}
 	
-	private void firePriceUpdated(PriceRow matchingRow) {
+	public void insertRow(int index, PriceRow priceRow) {
+		updateRowAsync(priceRow); // something something asynchronously load data
+		rowData.add(index, priceRow);
+		fireTableRowsInserted(index, index);
+	}
+	
+	public void removeRow(int index) {
+		rowData.remove(index);
+		fireTableRowsDeleted(index, index);
+	}
+	
+	public int getPriceTotal() {
+		int total = 0;
+		for(PriceRow row : rowData) {
+			// add totals
+		}
+		return total;
+	}
+	
+	protected void firePriceUpdated(PriceRow matchingRow) {
 		
 		int i = 0;
 		int matchingRowId = matchingRow.getVideoGame().getId();
@@ -130,31 +127,60 @@ public class PriceTableModel extends AbstractTableModel {
     	}
 	}
 
-	public void insertRow(int index, PriceRow priceRow) {
-		// something something asynchronously load data
-		rowData.add(index, priceRow);
-		fireTableRowsInserted(index, index);
+	private void updateRowAsync(PriceRow pr) {
+		new PriceRowUpdater(pr).execute();
 	}
 	
-	public void removeRow(int index) {
-		rowData.remove(index);
-		fireTableRowsDeleted(index, index);
-	}
-	
-	class Test extends SwingWorker<Object, Object> {
-		
-		// could get sale price data in a date range or the complete history
-		// need to check
+	class PriceRowUpdater extends SwingWorker<Integer, String> {
+		PriceRow priceRow;
 
-		public Test() {
-			
+		public PriceRowUpdater(PriceRow pr) {
+			priceRow = pr;
 		}
 		
 		@Override
-		protected Object doInBackground() throws Exception {
-			
-			return null;
+		protected Integer doInBackground() throws Exception {
+			publish("Checking...");
+			final VideoGame vg = priceRow.getVideoGame();
+	    	long period = database.getSecondsSinceUpdate(vg);
+	    	int daysSinceUpdate = (int) TimeUnit.SECONDS.toDays(period);
+	    	if(daysSinceUpdate > 7) {
+	    		publish("Updating...");
+	    		String searchString = database.getSearchQuery(vg);
+	    		System.out.println("search string length: " + searchString.length());
+	    		if(searchString.length() == 0) {
+	    			publish("No data");
+	    			//EventQueue.invokeLater(new Runnable() {
+					//	@Override
+					//	public void run() {
+							JOptionPane.showInputDialog("No search string exists for " + vg.getTitle());
+					//	}
+	    			//});
+	    		}
+	    	}
+	    	
+	    	int delay = random.nextInt(5000 - 3000) + 2000;
+	    	Thread.sleep(delay);
+	    	
+			return daysSinceUpdate;
 		}
 		
+		@Override
+		protected void done() {
+			try {
+				priceRow.setPriceColumnString(get() + " days");
+				firePriceUpdated(priceRow);
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		@Override
+	     protected void process(List<String> chunks) {
+	         for (String string : chunks) {
+	        	 priceRow.setPriceColumnString(string);
+	             firePriceUpdated(priceRow);
+	         }
+	     }
 	}
 }
