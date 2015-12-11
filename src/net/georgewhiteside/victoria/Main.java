@@ -1,10 +1,12 @@
 package net.georgewhiteside.victoria;
 
 import java.awt.EventQueue;
-
 import java.io.IOException;
 
 import javax.swing.UIManager;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // Videogame Investment Calculator and Tracker for Optimizing Returns on Internet Auctions
 
@@ -18,8 +20,12 @@ import javax.swing.UIManager;
 
 // NumberFormat.getCurrencyInstance()
 
-public class Main {
+public class Main
+{
+	static Logger logger = LoggerFactory.getLogger(Main.class);
+	
 	public static void main(String[] args) throws IOException {
+		logger.info("Application started.");
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }

@@ -25,7 +25,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.DocumentFilter;
 
-import net.georgewhiteside.victoria.tables.PriceRow;
 import net.georgewhiteside.victoria.tables.PriceTableModel;
 import net.georgewhiteside.victoria.tables.SearchRow;
 import net.georgewhiteside.victoria.tables.SearchTableModel;
@@ -34,6 +33,8 @@ import org.simmetrics.StringMetric;
 import org.simmetrics.metrics.JaroWinkler;
 import org.simmetrics.simplifiers.Simplifiers;
 import org.simmetrics.builders.StringMetricBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ebay.services.client.ClientConfig;
 import com.ebay.services.client.FindingServiceClientFactory;
@@ -44,6 +45,7 @@ import com.ebay.services.finding.PaginationInput;
 import com.ebay.services.finding.SortOrderType;
 
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.GridBagLayout;
@@ -106,16 +108,22 @@ public class MainWindow {
 	
 	private VideoGameDatabase vgDatabase;
 	private StringMetric stringMetric;
+	
+	Logger log = LoggerFactory.getLogger(this.getClass());
 
+	Thread t;
+	
 	/**
 	 * Create the application.
 	 */
 	public MainWindow() {
+		log.info("Creating main window...");
+		
 		Config config = Config.getInstance();
 		
-		String dbUrl = config.getProperty(Config.DB_URL);
-		String dbUser = config.getProperty(Config.DB_USER);
-		String dbPass = config.getProperty(Config.DB_PASS);
+		final String dbUrl = config.getProperty(Config.DB_URL);
+		final String dbUser = config.getProperty(Config.DB_USER);
+		final String dbPass = config.getProperty(Config.DB_PASS);
 		
 		vgDatabase = new VideoGameDatabase(dbUrl, dbUser, dbPass);
 		
@@ -125,10 +133,8 @@ public class MainWindow {
 			.build();
 		
 		initialize();
-		
+		//textSearch.setEnabled(false);
 		frame.setVisible(true);
-		
-		//ebayTest();
 	}
 	
 	private void ebayTest(String searchString) {

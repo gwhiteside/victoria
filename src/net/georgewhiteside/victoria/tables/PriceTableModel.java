@@ -72,7 +72,7 @@ public class PriceTableModel extends AbstractTableModel {
 		return null;
 	}
 	
-	public PriceRow getRow(int index) {
+	private PriceRow getRow(int index) {
 		return rowData.get(index);
 	}
 	
@@ -84,7 +84,7 @@ public class PriceTableModel extends AbstractTableModel {
 		}
 	}
 	
-	public void addRow(PriceRow priceRow) {
+	private void addRow(PriceRow priceRow) {
 		insertRow(getRowCount(), priceRow);
 	}
 	
@@ -96,13 +96,13 @@ public class PriceTableModel extends AbstractTableModel {
 		//new PriceRowUpdater(priceRow).execute();
 	}
 	
-	public void insertRow(int index, PriceRow priceRow) {
-		updateRowAsync(priceRow); // something something asynchronously load data
+	private void insertRow(int index, PriceRow priceRow) {
+		//updateRowAsync(priceRow); // something something asynchronously load data
 		rowData.add(index, priceRow);
 		fireTableRowsInserted(index, index);
 	}
 	
-	public void removeRow(int index) {
+	private void removeRow(int index) {
 		rowData.remove(index);
 		fireTableRowsDeleted(index, index);
 	}
@@ -116,7 +116,7 @@ public class PriceTableModel extends AbstractTableModel {
 	}
 	
 	protected void firePriceUpdated(PriceRow matchingRow) {
-		
+		/*
 		int i = 0;
 		int matchingRowId = matchingRow.getVideoGame().getId();
     	for(PriceRow x : rowData) {
@@ -125,62 +125,87 @@ public class PriceTableModel extends AbstractTableModel {
     		}
     		i++;
     	}
-	}
-
-	private void updateRowAsync(PriceRow pr) {
-		new PriceRowUpdater(pr).execute();
+    	*/
+		
+		int i = rowData.indexOf(matchingRow);
+		fireTableCellUpdated(i, 2);
+    	
 	}
 	
-	class PriceRowUpdater extends SwingWorker<Integer, String> {
-		PriceRow priceRow;
+	private class PriceRow {
+		VideoGame videoGame;
+		String priceColumnString;
+		
+		public PriceRow(VideoGame vg) {
+			videoGame = vg;
+			update();
+		}
+		
+		//public String getPrice() { return "0"; }
+		
+		public VideoGame getVideoGame() { return videoGame; }
+		
+		public void setPriceColumnString(String s) { priceColumnString = s; }
+		
+		public String getPriceColumnString() {
+			return priceColumnString;
+		}
+		
+		public void update() {
+			new PriceRowUpdater(this).execute();
+		}
+		
+		private class PriceRowUpdater extends SwingWorker<Integer, String> {
+			PriceRow priceRow;
 
-		public PriceRowUpdater(PriceRow pr) {
-			priceRow = pr;
-		}
-		
-		@Override
-		protected Integer doInBackground() throws Exception {
-			publish("Checking...");
-			final VideoGame vg = priceRow.getVideoGame();
-	    	long period = database.getSecondsSinceUpdate(vg);
-	    	int daysSinceUpdate = (int) TimeUnit.SECONDS.toDays(period);
-	    	if(daysSinceUpdate > 7) {
-	    		publish("Updating...");
-	    		String searchString = database.getSearchQuery(vg);
-	    		System.out.println("search string length: " + searchString.length());
-	    		if(searchString.length() == 0) {
-	    			publish("No data");
-	    			//EventQueue.invokeLater(new Runnable() {
-					//	@Override
-					//	public void run() {
-							JOptionPane.showInputDialog("No search string exists for " + vg.getTitle());
-					//	}
-	    			//});
-	    		}
-	    	}
-	    	
-	    	int delay = random.nextInt(5000 - 3000) + 2000;
-	    	Thread.sleep(delay);
-	    	
-			return daysSinceUpdate;
-		}
-		
-		@Override
-		protected void done() {
-			try {
-				priceRow.setPriceColumnString(get() + " days");
-				firePriceUpdated(priceRow);
-			} catch (InterruptedException | ExecutionException e) {
-				e.printStackTrace();
+			public PriceRowUpdater(PriceRow pr) {
+				priceRow = pr;
 			}
+			
+			@Override
+			protected Integer doInBackground() throws Exception {
+				publish("Checking...");
+				final VideoGame vg = priceRow.getVideoGame();
+		    	long period = database.getSecondsSinceUpdate(vg);
+		    	int daysSinceUpdate = (int) TimeUnit.SECONDS.toDays(period);
+		    	if(daysSinceUpdate > 7) {
+		    		publish("Updating...");
+		    		String searchString = database.getSearchQuery(vg);
+		    		System.out.println("search string length: " + searchString.length());
+		    		if(searchString.length() == 0) {
+		    			publish("No data");
+		    			//EventQueue.invokeLater(new Runnable() {
+						//	@Override
+						//	public void run() {
+								JOptionPane.showInputDialog("No search string exists for " + vg.getTitle());
+						//	}
+		    			//});
+		    		}
+		    	}
+		    	
+		    	int delay = random.nextInt(5000 - 3000) + 2000;
+		    	Thread.sleep(delay);
+		    	
+				return daysSinceUpdate;
+			}
+			
+			@Override
+			protected void done() {
+				try {
+					priceRow.setPriceColumnString(get() + " days");
+					firePriceUpdated(priceRow);
+				} catch (InterruptedException | ExecutionException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			@Override
+		     protected void process(List<String> chunks) {
+		         for (String string : chunks) {
+		        	 priceRow.setPriceColumnString(string);
+		             firePriceUpdated(priceRow);
+		         }
+		     }
 		}
-		
-		@Override
-	     protected void process(List<String> chunks) {
-	         for (String string : chunks) {
-	        	 priceRow.setPriceColumnString(string);
-	             firePriceUpdated(priceRow);
-	         }
-	     }
 	}
 }

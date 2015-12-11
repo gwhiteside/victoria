@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.georgewhiteside.utility.FileUtil;
 
 import com.google.common.collect.ImmutableList;
@@ -23,8 +26,12 @@ public class VideoGameDatabase {
 	
 	private List<VideoGame> videoGameList;
 	private int initialCapacity = 4000; // very minor optimization; set higher than number of products in database
+	
+	Logger log = LoggerFactory.getLogger(this.getClass());
 
 	public VideoGameDatabase(String url, String user, String pass) {
+		log.info("Initializing database access object...");
+		
 		dbUrl	= url;
 		dbUser	= user;
 		dbPass	= pass;
