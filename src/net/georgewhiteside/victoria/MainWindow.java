@@ -106,7 +106,7 @@ public class MainWindow {
 	private JTableCustom tableSearch;
 	private JTable tableSelected;
 	
-	private VideoGameDatabase vgDatabase;
+	private Database vgDatabase;
 	private StringMetric stringMetric;
 	
 	Logger log = LoggerFactory.getLogger(this.getClass());
@@ -125,7 +125,7 @@ public class MainWindow {
 		final String dbUser = config.getProperty(Config.DB_USER);
 		final String dbPass = config.getProperty(Config.DB_PASS);
 		
-		vgDatabase = new VideoGameDatabase(dbUrl, dbUser, dbPass);
+		vgDatabase = new Database(dbUrl, dbUser, dbPass);
 		
 		stringMetric = StringMetricBuilder
 			.with(new JaroWinkler())
@@ -178,7 +178,7 @@ public class MainWindow {
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosed(WindowEvent e) {
-				System.out.println("Shutting down...");
+				log.info("Shutting down...");
 				cleanup();
 			}
 		});
@@ -323,8 +323,6 @@ public class MainWindow {
 		priceModel.addRow(vg);
 		
 		textSearch.setText(""); // automatically clears the tableSearch model
-		
-		System.out.println(vgDatabase.getSearchQuery(vg));
 	}
 	
 	
@@ -362,7 +360,8 @@ public class MainWindow {
 		List<SearchRow> autocomplete = searchSimMetrics(query, vgDatabase.getAllVideoGames());
 		
 		long endTime = (System.nanoTime() - startTime) / 1000000;
-		System.out.println("" + endTime + " ms");
+		
+		log.debug("Autocomplete match time: {}ms", endTime);
 		
 		int limit = Integer.MAX_VALUE;
 		for(SearchRow result : autocomplete) {

@@ -2,6 +2,7 @@ package net.georgewhiteside.victoria;
 
 import java.awt.EventQueue;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.UIManager;
 
@@ -24,14 +25,18 @@ public class Main
 {
 	static Logger logger = LoggerFactory.getLogger(Main.class);
 	
-	public static void main(String[] args) throws IOException {
-		logger.info("Application started.");
+	public static void main(String[] args) {
+		Thread.currentThread().setName("bootstrap");
+		logger.debug("Application entry point");
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
+				Thread.currentThread().setName("dispatch-0");
+				logger.debug("Handoff to dispatch thread");
 				try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
 				catch (Exception e) { e.printStackTrace(); }
 				MainWindow window = new MainWindow();
 			}
 		});
+		logger.debug("Init thread concluded");
 	}
 }

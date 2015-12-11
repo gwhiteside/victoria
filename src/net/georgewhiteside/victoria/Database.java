@@ -18,7 +18,7 @@ import net.georgewhiteside.utility.FileUtil;
 
 import com.google.common.collect.ImmutableList;
 
-public class VideoGameDatabase {
+public class Database {
 	
 	private String dbUrl;
 	private String dbUser;
@@ -29,7 +29,7 @@ public class VideoGameDatabase {
 	
 	Logger log = LoggerFactory.getLogger(this.getClass());
 
-	public VideoGameDatabase(String url, String user, String pass) {
+	public Database(String url, String user, String pass) {
 		log.info("Initializing database access object...");
 		
 		dbUrl	= url;

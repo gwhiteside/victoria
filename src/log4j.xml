@@ -6,7 +6,7 @@
     <param name="Target" value="System.out"/> 
     <layout class="org.apache.log4j.PatternLayout"> 
       <!-- http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/EnhancedPatternLayout.html -->
-      <param name="ConversionPattern" value="%-5p %d{yyyy-MM-dd HH:mm:ss} %20.20c{2} - [%t] %m%n"/> 
+      <param name="ConversionPattern" value="%highlight{%-5p %d{yyyy-MM-dd HH:mm:ss} %20.20c{2} - [%t] %m}%n"/> 
     </layout> 
   </appender> 
 

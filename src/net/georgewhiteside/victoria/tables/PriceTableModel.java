@@ -16,8 +16,11 @@ import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.table.AbstractTableModel;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.georgewhiteside.victoria.VideoGame;
-import net.georgewhiteside.victoria.VideoGameDatabase;
+import net.georgewhiteside.victoria.Database;
 
 // what I should be doing is (in parallel to the rowData list) tracking these pricerows in a set (or videogame -> price in a map)
 // 
@@ -33,9 +36,11 @@ public class PriceTableModel extends AbstractTableModel {
 	String[] columnLabels = {TITLE, SYSTEM, PRICE};
 	
 	Random random = new Random();
-	VideoGameDatabase database;
+	Database database;
 	
-	public PriceTableModel(VideoGameDatabase vgDatabase) {
+	Logger log = LoggerFactory.getLogger(this.getClass());
+	
+	public PriceTableModel(Database vgDatabase) {
 		rowData = new ArrayList<PriceRow>();
 		database = vgDatabase;
 	}
@@ -129,12 +134,21 @@ public class PriceTableModel extends AbstractTableModel {
 		
 		int i = rowData.indexOf(matchingRow);
 		fireTableCellUpdated(i, 2);
-    	
+	}
+	
+	protected void fireRowUpdated(PriceRow matchingRow) {
+		int i = rowData.indexOf(matchingRow);
+		fireTableRowsUpdated(i, i);
+	}
+	
+	public boolean needsQuery(int index) {
+		return rowData.get(index).needsQuery();
 	}
 	
 	private class PriceRow {
 		VideoGame videoGame;
 		String priceColumnString;
+		boolean needsQuery = true;
 		
 		public PriceRow(VideoGame vg) {
 			videoGame = vg;
@@ -155,7 +169,9 @@ public class PriceTableModel extends AbstractTableModel {
 			new PriceRowUpdater(this).execute();
 		}
 		
-		private class PriceRowUpdater extends SwingWorker<Integer, String> {
+		public boolean needsQuery() { return needsQuery; }
+		
+		private class PriceRowUpdater extends SwingWorker<String, String> {
 			PriceRow priceRow;
 
 			public PriceRowUpdater(PriceRow pr) {
@@ -163,36 +179,48 @@ public class PriceTableModel extends AbstractTableModel {
 			}
 			
 			@Override
-			protected Integer doInBackground() throws Exception {
-				publish("Checking...");
+			protected String doInBackground() throws Exception {
+				publish("Updating...");
+				
 				final VideoGame vg = priceRow.getVideoGame();
 		    	long period = database.getSecondsSinceUpdate(vg);
 		    	int daysSinceUpdate = (int) TimeUnit.SECONDS.toDays(period);
+		    	
 		    	if(daysSinceUpdate > 7) {
-		    		publish("Updating...");
+		    		
 		    		String searchString = database.getSearchQuery(vg);
-		    		System.out.println("search string length: " + searchString.length());
+		    		
 		    		if(searchString.length() == 0) {
-		    			publish("No data");
+		    			setNeedsQuery(true);
+		    			log.debug("No search string for {}", vg.getTitle());
+		    			return null; //publish("No data");
+		    			
 		    			//EventQueue.invokeLater(new Runnable() {
 						//	@Override
 						//	public void run() {
-								JOptionPane.showInputDialog("No search string exists for " + vg.getTitle());
+								//JOptionPane.showInputDialog("No search string exists for " + vg.getTitle());
 						//	}
 		    			//});
+		    		} else {
+		    			setNeedsQuery(false);
+		    			log.debug("\"{}\" search string length: {}", vg.getTitle(), searchString.length());
 		    		}
+		    	} else {
+		    		
 		    	}
 		    	
-		    	int delay = random.nextInt(5000 - 3000) + 2000;
-		    	Thread.sleep(delay);
-		    	
-				return daysSinceUpdate;
+				return String.valueOf(daysSinceUpdate);
 			}
 			
 			@Override
 			protected void done() {
 				try {
-					priceRow.setPriceColumnString(get() + " days");
+					Object value = get();
+					if(value == null) {
+						priceRow.setPriceColumnString("No data");
+					} else {
+						priceRow.setPriceColumnString(get() + " days");
+					}
 					firePriceUpdated(priceRow);
 				} catch (InterruptedException | ExecutionException e) {
 					e.printStackTrace();
@@ -206,6 +234,17 @@ public class PriceTableModel extends AbstractTableModel {
 		             firePriceUpdated(priceRow);
 		         }
 		     }
+			
+			private void setNeedsQuery(boolean nq) {
+				needsQuery = nq;
+				EventQueue.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						fireRowUpdated(priceRow);
+					}
+				});
+				
+			}
 		}
 	}
 }

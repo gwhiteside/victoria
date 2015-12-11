@@ -5,11 +5,18 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
 
+import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableModel;
+
+import net.georgewhiteside.victoria.tables.PriceTableModel;
+
+// https://tips4java.wordpress.com/2010/01/24/table-row-rendering/
 
 @SuppressWarnings("serial")
 public class JTableCustom extends JTable
@@ -28,23 +35,53 @@ public class JTableCustom extends JTable
 		setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
 		    @Override
 		    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-		    	/*if(column == 1) {					// game system column
+		    	
+		    	
+		    	
+		    	setForeground(null);
+		    	
+		    	/*
+		    	if(column == 1) {					// game system column
 		    		setForeground(Color.GRAY);
 		    	} else if(column == 2) {			// percentage column
 		    		setForeground(Color.GREEN);
 		    		//value = "trololol";
 		    	} else {							// set no color; let the super call pick up the default
 		    		setForeground(null); 
-		    	}*/
+		    	}
+		    	*/
 		    	
 		        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 		        
-		    	setBorder(BORDER);
+		    	//setBorder(BORDER);
+		        
+		        TableModel model = table.getModel();
+		        if(model instanceof PriceTableModel) {
+		    		PriceTableModel ptm = (PriceTableModel) model;
+		    		if(ptm.needsQuery(row)) {
+		    			if(table.isRowSelected(row)) {
+		    				setForeground(Color.RED);
+		    			} else {
+		    				setForeground(Color.RED);
+		    			}
+		    		} else {
+		    			
+		    		}
+		    	}
 		        
 		        return this;
 		    }
 		}); 
 	}
+	
+	// row-level rendering
+	@Override
+	public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+        Component c = super.prepareRenderer(renderer, row, column);
+        JComponent jc = (JComponent) c;
+        jc.setBorder(BORDER);
+        return c;
+    }
 	
 	public Insets getCellInsets() { return INSETS; }
 	
