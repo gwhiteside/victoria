@@ -40,6 +40,7 @@ public class Database {
 	}
 	
 	private List<VideoGame> getAllVideoGamesFromDb() {
+		// TODO try with resources
 		List<VideoGame> videoGames = new ArrayList<VideoGame>(initialCapacity);
 		String query = FileUtil.loadTextResource("/res/get_video_games.sql");
 		
@@ -138,9 +139,11 @@ public class Database {
 		return list;
 	}
 	
-	public String getSearchQuery(int id) {
+	
+	private String getSearchQuery(int id) {
+		// TODO try with resources
 		String query = FileUtil.loadTextResource("/res/get_search_query.sql");
-		String queryString = "";
+		String queryString = null;
 		
 		try {
 			Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
@@ -150,9 +153,11 @@ public class Database {
 			
 			ResultSet resultSet = statement.executeQuery();
 			
-			// TODO better to check for size 0, size 1, and size > 1; result should never be > 1
 			if(resultSet.first()) {
 				queryString = resultSet.getString("query");
+				if(resultSet.next()) {
+					throwProductSearchIntegrityException(id);
+				}
 			}
 			
 			resultSet.close();
@@ -165,7 +170,55 @@ public class Database {
 		return queryString;
 	}
 	
+	/**
+	 * 
+	 * @param id
+	 * @return Search string for given VideoGame if it exists, or null if it doesn't.
+	 */
 	public String getSearchQuery(VideoGame vg) {
 		return getSearchQuery(vg.getId());
+	}
+	
+	private void setSearchQuery(int id, String queryString) {
+		// does an insert/ignore followed by update in a single transaction...
+		// not sure this is the best and simplest way of portably doing this without additional libraries
+		
+		String insertQuery = FileUtil.loadTextResource("/res/insert_search_string.sql");
+		String updateQuery = FileUtil.loadTextResource("/res/update_search_string.sql");
+		
+		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
+			PreparedStatement insertStatement = connection.prepareStatement(insertQuery);
+			PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
+			
+			connection.setAutoCommit(false);
+			
+			insertStatement.setInt(1, id);
+			insertStatement.setString(2, queryString);
+			insertStatement.execute();
+			//insertStatement.getUpdateCount();
+			
+			updateStatement.setString(1, queryString);
+			updateStatement.setInt(2, id);
+			updateStatement.execute();
+			
+			connection.commit();
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		log.info("Set search query for product_id={}: {}", id, queryString);
+	}
+	
+	public void setSearchQuery(VideoGame vg, String queryString) {
+		setSearchQuery(vg.getId(), queryString);
+	}
+	
+	
+	
+	private void throwProductSearchIntegrityException(int id) {
+		// Should never happen, but if it does, it would be a bad idea to continue normally.
+		log.error("This never needs to be more than one result! Bailing. videogames.search id={}", id);
+		throw new IllegalArgumentException("Should be a 1:0..1 relationship between videogames.product and videogames.search!");
 	}
 }

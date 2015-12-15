@@ -1,5 +1,6 @@
 # local configuration; contains private information
 configuration.xml
+victoria.properties
 
 # Eclipse
 bin/

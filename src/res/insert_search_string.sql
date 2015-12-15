@@ -1,0 +1,1 @@
+INSERT IGNORE INTO search(product_id, query) VALUES(?, ?);

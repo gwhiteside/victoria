@@ -3,12 +3,15 @@ package net.georgewhiteside.victoria;
 import javax.swing.AbstractAction;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import javax.swing.JTextField;
 
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -26,6 +29,7 @@ import javax.swing.text.Document;
 import javax.swing.text.DocumentFilter;
 
 import net.georgewhiteside.victoria.tables.PriceTableModel;
+import net.georgewhiteside.victoria.tables.PriceTableModel.PriceRow;
 import net.georgewhiteside.victoria.tables.SearchRow;
 import net.georgewhiteside.victoria.tables.SearchTableModel;
 
@@ -104,9 +108,11 @@ public class MainWindow {
 	private JFrame frame;
 	private JTextField textSearch;
 	private JTableCustom tableSearch;
-	private JTable tableSelected;
+	private JTableCustom tablePrice;
 	
-	private Database vgDatabase;
+	private QueryEditor queryEditor;
+	
+	private Database database;
 	private StringMetric stringMetric;
 	
 	Logger log = LoggerFactory.getLogger(this.getClass());
@@ -125,7 +131,7 @@ public class MainWindow {
 		final String dbUser = config.getProperty(Config.DB_USER);
 		final String dbPass = config.getProperty(Config.DB_PASS);
 		
-		vgDatabase = new Database(dbUrl, dbUser, dbPass);
+		database = new Database(dbUrl, dbUser, dbPass);
 		
 		stringMetric = StringMetricBuilder
 			.with(new JaroWinkler())
@@ -135,6 +141,8 @@ public class MainWindow {
 		initialize();
 		//textSearch.setEnabled(false);
 		frame.setVisible(true);
+		
+		queryEditor = new QueryEditor(frame);
 	}
 	
 	private void ebayTest(String searchString) {
@@ -273,8 +281,8 @@ public class MainWindow {
 		
 		
 		
-		tableSelected = new JTableCustom();
-		final PriceTableModel priceTableModel = new PriceTableModel(vgDatabase);
+		tablePrice = new JTableCustom();
+		final PriceTableModel priceTableModel = new PriceTableModel(database);
 		priceTableModel.addTableModelListener(new TableModelListener() {
 			NumberFormat format = NumberFormat.getCurrencyInstance();
 			@Override
@@ -282,17 +290,47 @@ public class MainWindow {
 				labelTotal.setText(format.format(priceTableModel.getPriceTotal()));
 			}
 		});
-		tableSelected.setModel(priceTableModel);
-		JScrollPane scrollSelected = new JScrollPane(tableSelected);
+		tablePrice.setModel(priceTableModel);
+		JPopupMenu popupMenu = new JPopupMenu();
+		JMenuItem editItem = new JMenuItem("Edit");
+		editItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// query editor is a modal dialog, so this is all done on the dispatch thread
+				// serially to enforce sane program flow
+				
+				int row = tablePrice.getSelectedRow();
+				PriceRow priceRow = ((PriceTableModel)tablePrice.getModel()).getRow(row);
+				VideoGame vg = priceRow.getVideoGame();
+				
+				queryEditor.setupAndShow(vg.getTitle(), database.getSearchQuery(vg));
+				String newQuery = queryEditor.getQuery();
+				
+				// null means no change is intended to be made
+				if(newQuery == null) {
+					return;
+				}
+				
+				// quick and dirty check to make sure we're not accidentally saving bogus data
+				if(newQuery.length() > 10) {
+					database.setSearchQuery(vg, newQuery);
+					priceRow.update(); // start pulling in data
+					//((PriceTableModel)tablePrice.getModel()).updatePrice(vg); // update any duplicate rows immediately
+				}
+			}
+		});
+		popupMenu.add(editItem);
+		tablePrice.setComponentPopupMenu(popupMenu);
+		JScrollPane scrollPrice = new JScrollPane(tablePrice);
 		
-		GridBagConstraints gbc_scrollSelected = new GridBagConstraints();
-		gbc_scrollSelected.gridheight = 2;
-		gbc_scrollSelected.weightx = 0.5;
-		gbc_scrollSelected.fill = GridBagConstraints.BOTH;
-		gbc_scrollSelected.insets = new Insets(0, 0, 5, 0);
-		gbc_scrollSelected.gridx = 1;
-		gbc_scrollSelected.gridy = 2;
-		panel.add(scrollSelected, gbc_scrollSelected);
+		GridBagConstraints gbc_scrollPrice = new GridBagConstraints();
+		gbc_scrollPrice.gridheight = 2;
+		gbc_scrollPrice.weightx = 0.5;
+		gbc_scrollPrice.fill = GridBagConstraints.BOTH;
+		gbc_scrollPrice.insets = new Insets(0, 0, 5, 0);
+		gbc_scrollPrice.gridx = 1;
+		gbc_scrollPrice.gridy = 2;
+		panel.add(scrollPrice, gbc_scrollPrice);
 		
 		textField = new JTextField();
 		GridBagConstraints gbc_textField = new GridBagConstraints();
@@ -319,7 +357,7 @@ public class MainWindow {
 		SearchTableModel searchModel = (SearchTableModel) tableSearch.getModel();
 		VideoGame vg = searchModel.getVideoGameByRow(selectedRow);
 		
-		PriceTableModel priceModel = (PriceTableModel) tableSelected.getModel();
+		PriceTableModel priceModel = (PriceTableModel) tablePrice.getModel();
 		priceModel.addRow(vg);
 		
 		textSearch.setText(""); // automatically clears the tableSearch model
@@ -357,7 +395,7 @@ public class MainWindow {
 		}
 		
 		long startTime = System.nanoTime();
-		List<SearchRow> autocomplete = searchSimMetrics(query, vgDatabase.getAllVideoGames());
+		List<SearchRow> autocomplete = searchSimMetrics(query, database.getAllVideoGames());
 		
 		long endTime = (System.nanoTime() - startTime) / 1000000;
 		

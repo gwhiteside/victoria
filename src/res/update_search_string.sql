@@ -1,0 +1,1 @@
+UPDATE search SET query = ? WHERE product_id = ?;

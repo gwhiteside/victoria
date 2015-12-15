@@ -77,8 +77,12 @@ public class PriceTableModel extends AbstractTableModel {
 		return null;
 	}
 	
-	private PriceRow getRow(int index) {
+	public PriceRow getRow(int index) {
 		return rowData.get(index);
+	}
+	
+	public VideoGame getVideoGame(int row) {
+		return getRow(row).getVideoGame();
 	}
 	
 	public void clear() {
@@ -145,10 +149,10 @@ public class PriceTableModel extends AbstractTableModel {
 		return rowData.get(index).needsQuery();
 	}
 	
-	private class PriceRow {
+	public class PriceRow {
 		VideoGame videoGame;
 		String priceColumnString;
-		boolean needsQuery = true;
+		boolean needsQuery = false;
 		
 		public PriceRow(VideoGame vg) {
 			videoGame = vg;
@@ -183,6 +187,7 @@ public class PriceTableModel extends AbstractTableModel {
 				publish("Updating...");
 				
 				final VideoGame vg = priceRow.getVideoGame();
+				
 		    	long period = database.getSecondsSinceUpdate(vg);
 		    	int daysSinceUpdate = (int) TimeUnit.SECONDS.toDays(period);
 		    	
@@ -190,23 +195,15 @@ public class PriceTableModel extends AbstractTableModel {
 		    		
 		    		String searchString = database.getSearchQuery(vg);
 		    		
-		    		if(searchString.length() == 0) {
-		    			setNeedsQuery(true);
-		    			log.debug("No search string for {}", vg.getTitle());
+		    		if(searchString == null || searchString.length() == 0) {
+		    			
 		    			return null; //publish("No data");
 		    			
-		    			//EventQueue.invokeLater(new Runnable() {
-						//	@Override
-						//	public void run() {
-								//JOptionPane.showInputDialog("No search string exists for " + vg.getTitle());
-						//	}
-		    			//});
 		    		} else {
-		    			setNeedsQuery(false);
-		    			log.debug("\"{}\" search string length: {}", vg.getTitle(), searchString.length());
+		    			// TODO update the search results
 		    		}
 		    	} else {
-		    		
+		    		// everything should be up-to-date
 		    	}
 		    	
 				return String.valueOf(daysSinceUpdate);
@@ -217,8 +214,12 @@ public class PriceTableModel extends AbstractTableModel {
 				try {
 					Object value = get();
 					if(value == null) {
+						setNeedsQuery(true);
+		    			log.debug("No search string for {}", priceRow.getVideoGame().getTitle());
 						priceRow.setPriceColumnString("No data");
 					} else {
+						setNeedsQuery(false);
+		    			//log.debug("\"{}\" search string length: {}", vg.getTitle(), searchString.length());
 						priceRow.setPriceColumnString(get() + " days");
 					}
 					firePriceUpdated(priceRow);

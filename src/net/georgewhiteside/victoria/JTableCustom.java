@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.swing.JComponent;
 import javax.swing.JTable;
@@ -32,11 +34,10 @@ public class JTableCustom extends JTable
 		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		setShowGrid(false);
 		setTableHeader(null);
+		
 		setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
 		    @Override
 		    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-		    	
-		    	
 		    	
 		    	setForeground(null);
 		    	
@@ -71,7 +72,19 @@ public class JTableCustom extends JTable
 		        
 		        return this;
 		    }
-		}); 
+		});
+		
+		addMouseListener(new MouseAdapter() {
+		    @Override
+		    public void mousePressed(MouseEvent e) {
+		        int r = rowAtPoint(e.getPoint());
+		        if (r >= 0 && r < getRowCount()) {
+		            setRowSelectionInterval(r, r);
+		        } else {
+		            clearSelection();
+		        }
+		    }
+		});
 	}
 	
 	// row-level rendering
