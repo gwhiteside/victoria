@@ -15,10 +15,15 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -101,7 +106,7 @@ import javax.swing.JComboBox;
 
 @SuppressWarnings("serial")
 public class MainWindow {
-	private String EBAY_CAT_VIDEO_GAMES = "139973";
+	
 	
 	private String title = "VICTORIA";
 
@@ -113,6 +118,7 @@ public class MainWindow {
 	private QueryEditor queryEditor;
 	
 	private Database database;
+	private EbayMiner ebay;
 	private StringMetric stringMetric;
 	
 	Logger log = LoggerFactory.getLogger(this.getClass());
@@ -143,37 +149,15 @@ public class MainWindow {
 		frame.setVisible(true);
 		
 		queryEditor = new QueryEditor(frame);
+		
+		ebay = new EbayMiner(Config.getInstance().getProperty(Config.EBAY_APP_ID));
+		//ebay.getSales("045496630140 -(famicom,sealed,cib,complete,box,lot,2,3,4,5,6,7,8,9,sega,duck, instructions,manual,case,sleeve,dust)", 0, 1450260250);
+		
+		// 1450260250 // current unix time
+		// 1448928000 // 2015-12-01
+		
+		
 	}
-	
-	private void ebayTest(String searchString) {
-		ClientConfig clientConfig = new ClientConfig();
-		String ebayAppID = Config.getInstance().getProperty(Config.EBAY_APP_ID);
-		clientConfig.setApplicationId(ebayAppID);
-		
-		FindingServicePortType serviceClient = FindingServiceClientFactory.getServiceClient(clientConfig);
-		
-		FindCompletedItemsRequest request = new FindCompletedItemsRequest();
-		
-		request.setKeywords(searchString);
-		request.setSortOrder(SortOrderType.END_TIME_SOONEST);
-		request.getCategoryId().clear();
-		request.getCategoryId().add(EBAY_CAT_VIDEO_GAMES);
-		
-		PaginationInput pi = new PaginationInput();
-		pi.setEntriesPerPage(100);
-		pi.setPageNumber(1);
-		
-		request.setPaginationInput(pi);
-		
-		FindCompletedItemsResponse response = serviceClient.findCompletedItems(request);
-		
-		//response.getSearchResult().getItem().get(0).getListingInfo().getEndTime()
-		//response.getSearchResult().getItem().get(0).getSellingStatus().getConvertedCurrentPrice().
-		System.out.println("Ack = " + response.getAck());
-		System.out.println("Found " + response.getSearchResult().getCount() + " items");
-	}
-	
-
 
 	/**
 	 * Initialize the contents of the frame.
@@ -186,8 +170,7 @@ public class MainWindow {
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosed(WindowEvent e) {
-				log.info("Shutting down...");
-				cleanup();
+				shutdown();
 			}
 		});
 		
@@ -282,7 +265,7 @@ public class MainWindow {
 		
 		
 		tablePrice = new JTableCustom();
-		final PriceTableModel priceTableModel = new PriceTableModel(database);
+		final PriceTableModel priceTableModel = new PriceTableModel(database, ebay);
 		priceTableModel.addTableModelListener(new TableModelListener() {
 			NumberFormat format = NumberFormat.getCurrencyInstance();
 			@Override
@@ -313,7 +296,7 @@ public class MainWindow {
 				
 				// quick and dirty check to make sure we're not accidentally saving bogus data
 				if(newQuery.length() > 10) {
-					database.setSearchQuery(vg, newQuery);
+					database.saveSearchQuery(vg, newQuery);
 					priceRow.update(); // start pulling in data
 					//((PriceTableModel)tablePrice.getModel()).updatePrice(vg); // update any duplicate rows immediately
 				}
@@ -466,7 +449,7 @@ public class MainWindow {
 	
 	
 	
-	private void cleanup() {
-		
+	private void shutdown() {
+		log.info("Shutting down...");
 	}
 }

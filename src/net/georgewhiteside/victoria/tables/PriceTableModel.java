@@ -19,8 +19,13 @@ import javax.swing.table.AbstractTableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ebay.services.finding.SearchItem;
+
+import net.georgewhiteside.victoria.EbayMiner;
+import net.georgewhiteside.victoria.EbayUtils;
 import net.georgewhiteside.victoria.VideoGame;
 import net.georgewhiteside.victoria.Database;
+import net.georgewhiteside.victoria.VideoGameSale;
 
 // what I should be doing is (in parallel to the rowData list) tracking these pricerows in a set (or videogame -> price in a map)
 // 
@@ -37,12 +42,14 @@ public class PriceTableModel extends AbstractTableModel {
 	
 	Random random = new Random();
 	Database database;
+	EbayMiner ebay;
 	
 	Logger log = LoggerFactory.getLogger(this.getClass());
 	
-	public PriceTableModel(Database vgDatabase) {
+	public PriceTableModel(Database vgDatabase, EbayMiner ebayMiner) {
 		rowData = new ArrayList<PriceRow>();
 		database = vgDatabase;
+		ebay = ebayMiner;
 	}
 
 	@Override
@@ -188,8 +195,12 @@ public class PriceTableModel extends AbstractTableModel {
 				
 				final VideoGame vg = priceRow.getVideoGame();
 				
-		    	long period = database.getSecondsSinceUpdate(vg);
-		    	int daysSinceUpdate = (int) TimeUnit.SECONDS.toDays(period);
+				long lastUpdateUnixTime = database.getSearchTimestamp(videoGame);
+				long currentUnixTime = System.currentTimeMillis() / 1000;
+				long secondsSinceUpdate = currentUnixTime - lastUpdateUnixTime;
+		    	int daysSinceUpdate = (int) TimeUnit.SECONDS.toDays(secondsSinceUpdate);
+		    	
+		    	List<VideoGameSale> videoGameSales;
 		    	
 		    	if(daysSinceUpdate > 7) {
 		    		
@@ -200,13 +211,21 @@ public class PriceTableModel extends AbstractTableModel {
 		    			return null; //publish("No data");
 		    			
 		    		} else {
-		    			// TODO update the search results
+		    			// get updated search results
+		    			List<SearchItem> searchItems = ebay.getSales(searchString, lastUpdateUnixTime, currentUnixTime);
+		    			
+		    			// convert data to friendlier container format
+		    			videoGameSales = EbayUtils.toVideoGameSales(searchItems, vg.getId());
+		    			
+		    			database.insertSales(videoGameSales);
+		    			
+		    			database.updateSearchTimestamp(vg.getId(), currentUnixTime);
 		    		}
-		    	} else {
-		    		// everything should be up-to-date
 		    	}
 		    	
-				return String.valueOf(daysSinceUpdate);
+		    	// calculate and return median price
+		    	
+				return "0"; // return String.valueOf(daysSinceUpdate);
 			}
 			
 			@Override

@@ -143,7 +143,8 @@ public class QueryEditor extends JDialog {
 	public void setupAndShow(String videoGameTitle, String query) {
 		setTitle("Query String for " + videoGameTitle);
 		query = query == null ? "" : query;
-		textPane.setText(process(query));
+		query = collapseWhitespace(query);
+		textPane.setText(expandCsv(query));
 		queryString = null;
 		setVisible(true);
 	}
@@ -170,8 +171,8 @@ public class QueryEditor extends JDialog {
 		
 		private void updateCount(Document doc) {
 			String text = getText(doc);
-			String collapsed = text.replaceAll("\\s+", " ");
-			collapsed = collapsed.replace(", ", ",");
+			String collapsed = collapseWhitespace(text);
+			collapsed = collapseCsv(collapsed);
 			lblCount.setText(String.valueOf(collapsed.length()));
 		}
 	}
@@ -186,9 +187,19 @@ public class QueryEditor extends JDialog {
 		return text;
 	}
 	
-	private String process(String string) {
-		string = string.replaceAll("\\s+", " ");
-		string = string.replace(",", ", ");
-		return string;
+	private String collapseWhitespace(String string) {
+		return string.replaceAll("\\s+", " ");
+	}
+	
+	private String collapseCsv(String string) {
+		return string.replace(",  ", ",");
+	}
+	
+	private String expandCsv(String string) {
+		return string.replace(",", ", ");
+	}
+	
+	private String scramble() {
+		return null;
 	}
 }

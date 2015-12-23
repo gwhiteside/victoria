@@ -34,7 +34,7 @@ public class Main
 				logger.debug("Handoff to dispatch thread");
 				try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
 				catch (Exception e) { e.printStackTrace(); }
-				MainWindow window = new MainWindow();
+				new MainWindow();
 			}
 		});
 		logger.debug("Init thread concluded");

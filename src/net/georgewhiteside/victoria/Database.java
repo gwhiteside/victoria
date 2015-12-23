@@ -103,8 +103,8 @@ public class Database {
 		getSales(vg.getId());
 	}
 	
-	public long getLastUpdateTimestamp(VideoGame videoGame) {
-		String query = FileUtil.loadTextResource("/res/get_search_query.sql");
+	public long getSearchTimestamp(VideoGame videoGame) {
+		String query = FileUtil.loadTextResource("/res/get_search.sql");
 		long timestamp = 0;
 		
 		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
@@ -114,7 +114,7 @@ public class Database {
 			
 			try(ResultSet resultSet = statement.executeQuery();) {
 				if(resultSet.first()) {
-					timestamp = resultSet.getLong("updated");
+					timestamp = resultSet.getLong("timestamp");
 				}
 			}
 		} catch (SQLException e) {
@@ -124,12 +124,14 @@ public class Database {
 		return timestamp;
 	}
 	
+	/*
 	public long getSecondsSinceUpdate(VideoGame videoGame) {
 		// TimeUnit.SECONDS
-		long updateUnixTime = getLastUpdateTimestamp(videoGame);
+		long updateUnixTime = getSearchTimestamp(videoGame);
 		long currentUnixTime = System.currentTimeMillis() / 1000;
 		return currentUnixTime - updateUnixTime;
 	}
+	*/
 	
 	public List<VideoGameSale> getPriceHistoryRange(int videoGameId, long start, long end) {
 		List<VideoGameSale> list = new ArrayList<VideoGameSale>();
@@ -142,7 +144,7 @@ public class Database {
 	
 	private String getSearchQuery(int id) {
 		// TODO try with resources
-		String query = FileUtil.loadTextResource("/res/get_search_query.sql");
+		String query = FileUtil.loadTextResource("/res/get_search.sql");
 		String queryString = null;
 		
 		try {
@@ -179,7 +181,7 @@ public class Database {
 		return getSearchQuery(vg.getId());
 	}
 	
-	private void setSearchQuery(int id, String queryString) {
+	private void saveSearchQuery(int id, String queryString) {
 		// does an insert/ignore followed by update in a single transaction...
 		// not sure this is the best and simplest way of portably doing this without additional libraries
 		
@@ -210,10 +212,55 @@ public class Database {
 		log.info("Set search query for product_id={}: {}", id, queryString);
 	}
 	
-	public void setSearchQuery(VideoGame vg, String queryString) {
-		setSearchQuery(vg.getId(), queryString);
+	public void saveSearchQuery(VideoGame vg, String queryString) {
+		saveSearchQuery(vg.getId(), queryString);
 	}
 	
+	public void insertSales(List<VideoGameSale> sales) {
+		String sql = FileUtil.loadTextResource("/res/insert_sale.sql");
+		
+		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
+			PreparedStatement statement = connection.prepareStatement(sql)) {
+			
+			int i = 0;
+			for(VideoGameSale sale : sales) {
+				statement.setLong(1, sale.getSaleId());
+				statement.setInt(2, sale.getProductId());
+				statement.setLong(3, sale.getTimestamp());
+				statement.setInt(4, sale.getPrice());
+				statement.setString(5, sale.getTitle());
+				
+				statement.addBatch();
+				i++;
+				
+				if(i >= 50) {
+					statement.executeBatch();
+					i = 0;
+				}
+			}
+			
+			if(i > 0) {
+				statement.executeBatch();
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void updateSearchTimestamp(int productId, long timestamp) {
+		String sql = FileUtil.loadTextResource("/res/update_search_timestamp.sql");
+		
+		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
+			PreparedStatement statement = connection.prepareStatement(sql)) {
+			
+			statement.setLong(1, timestamp);
+			statement.setInt(2, productId);
+			
+			statement.executeUpdate(); // TODO should always expect return value of 1 (single row updated)
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	
 	private void throwProductSearchIntegrityException(int id) {

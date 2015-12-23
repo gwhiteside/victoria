@@ -1,0 +1,1 @@
+UPDATE search SET timestamp = ? WHERE product_id = ?;

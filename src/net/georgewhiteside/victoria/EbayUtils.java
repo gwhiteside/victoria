@@ -1,12 +1,27 @@
 package net.georgewhiteside.victoria;
 
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.TimeZone;
+
+import com.ebay.services.client.ClientConfig;
+import com.ebay.services.client.FindingServiceClientFactory;
 import com.ebay.services.finding.Amount;
+import com.ebay.services.finding.FindCompletedItemsRequest;
+import com.ebay.services.finding.FindCompletedItemsResponse;
+import com.ebay.services.finding.FindingServicePortType;
+import com.ebay.services.finding.PaginationInput;
 import com.ebay.services.finding.SearchItem;
+import com.ebay.services.finding.SortOrderType;
 
 //350 characters per search; 99 characters per word ("word" defined as consecutive characters
 
-public class EbayUtils
-{
+public class EbayUtils {
+	
+	public static String EBAY_CAT_VIDEO_GAMES = "139973";
+	private static final TimeZone TZ_UTC = TimeZone.getTimeZone("Etc/UTC");
+
 	private EbayUtils() {
 	}
 	
@@ -61,5 +76,35 @@ public class EbayUtils
 			int price = EbayUtils.getPriceWithShipping(sale);
 			String title = sale.getTitle();
 			return new VideoGameSale(saleId, videoGameId, title, price, timestamp);
+	}
+	
+	public static List<VideoGameSale> toVideoGameSales(List<SearchItem> searchItems, int videoGameId) {
+		// convert data to friendlier container format
+		List<VideoGameSale> videoGameSales = new ArrayList<VideoGameSale>();
+		for(SearchItem item : searchItems) {
+			videoGameSales.add(toVideoGameSale(item, videoGameId));
+		}
+		
+		return videoGameSales;
+	}
+	
+	public static String toISO8601(Calendar calendar) {
+		return String.format("%tFT%<tT.%<tLZ", calendar);
+	}
+	
+	public static String unixTimeISO8601(long seconds) {
+		Calendar calendar = Calendar.getInstance(TZ_UTC);
+		calendar.setTimeInMillis(seconds * 1000);
+		return toISO8601(calendar);
+	}
+	
+	public static String unixTimeISO8601Exclusive(long seconds) {
+		Calendar calendar = Calendar.getInstance(TZ_UTC);
+		calendar.setTimeInMillis(seconds * 1000 - 1);
+		return toISO8601(calendar);
+	}
+	
+	public static String currentTimeISO8601() {
+		return toISO8601(Calendar.getInstance(TZ_UTC));
 	}
 }
