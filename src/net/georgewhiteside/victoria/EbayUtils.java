@@ -63,12 +63,9 @@ public class EbayUtils {
 	public static List<VideoGameSale> toVideoGameSales(List<SearchItem> searchItems, int videoGameId) {
 		// convert data to friendlier container format
 		List<VideoGameSale> videoGameSales = new ArrayList<VideoGameSale>();
-		int i = 0;
-		int total = searchItems.size();
+		
 		for(SearchItem item : searchItems) {
-			System.out.println("processing " + i + " of " + total + "...");
 			videoGameSales.add(toVideoGameSale(item, videoGameId));
-			i++;
 		}
 		
 		return videoGameSales;

@@ -17,6 +17,7 @@ public class Config {
 	public static final String DB_PASS = "databasePass";
 	public static final String EBAY_APP_ID = "ebayAppID";
 	public static final String POSTAL_CODE = "postalCode";
+	public static final String UPDATE_INTERVAL_DAYS = "updateIntervalDays";
 	
 	private Config() {
 		properties = new Properties();

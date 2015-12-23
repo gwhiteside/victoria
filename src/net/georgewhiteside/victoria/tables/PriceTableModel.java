@@ -205,7 +205,8 @@ public class PriceTableModel extends AbstractTableModel {
 		    	
 		    	List<VideoGameSale> videoGameSales;
 		    	
-		    	if(daysSinceUpdate > 7) {
+		    	int interval = Integer.valueOf(config.getProperty(Config.UPDATE_INTERVAL_DAYS));
+		    	if(daysSinceUpdate > interval) {
 		    		
 		    		String searchString = database.getSearchQuery(vg);
 		    		
@@ -214,17 +215,17 @@ public class PriceTableModel extends AbstractTableModel {
 		    			return null; //publish("No data");
 		    			
 		    		} else {
-		    			
 		    			// get updated search results
 		    			List<SearchItem> searchItems = ebay.getSales(searchString, lastUpdateUnixTime, currentUnixTime);
 		    			
 		    			// convert data to friendlier container format
 		    			videoGameSales = EbayUtils.toVideoGameSales(searchItems, vg.getId());
 		    			
+		    			// commit sales data to database
 		    			database.insertSales(videoGameSales);
 		    			
+		    			// update search timestamp
 		    			database.updateSearchTimestamp(vg.getId(), currentUnixTime);
-		    			
 		    		}
 		    	}
 		    	
