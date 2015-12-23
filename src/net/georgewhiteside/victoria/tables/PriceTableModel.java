@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import com.ebay.services.finding.SearchItem;
 
+import net.georgewhiteside.victoria.Config;
 import net.georgewhiteside.victoria.EbayMiner;
 import net.georgewhiteside.victoria.EbayUtils;
 import net.georgewhiteside.victoria.VideoGame;
@@ -184,9 +185,11 @@ public class PriceTableModel extends AbstractTableModel {
 		
 		private class PriceRowUpdater extends SwingWorker<String, String> {
 			PriceRow priceRow;
+			Config config;
 
 			public PriceRowUpdater(PriceRow pr) {
 				priceRow = pr;
+				config = Config.getInstance();
 			}
 			
 			@Override
@@ -211,6 +214,7 @@ public class PriceTableModel extends AbstractTableModel {
 		    			return null; //publish("No data");
 		    			
 		    		} else {
+		    			
 		    			// get updated search results
 		    			List<SearchItem> searchItems = ebay.getSales(searchString, lastUpdateUnixTime, currentUnixTime);
 		    			
@@ -220,6 +224,7 @@ public class PriceTableModel extends AbstractTableModel {
 		    			database.insertSales(videoGameSales);
 		    			
 		    			database.updateSearchTimestamp(vg.getId(), currentUnixTime);
+		    			
 		    		}
 		    	}
 		    	

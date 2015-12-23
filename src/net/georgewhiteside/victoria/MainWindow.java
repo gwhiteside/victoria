@@ -106,8 +106,6 @@ import javax.swing.JComboBox;
 
 @SuppressWarnings("serial")
 public class MainWindow {
-	
-	
 	private String title = "VICTORIA";
 
 	private JFrame frame;
@@ -139,6 +137,8 @@ public class MainWindow {
 		
 		database = new Database(dbUrl, dbUser, dbPass);
 		
+		ebay = new EbayMiner(config.getProperty(Config.EBAY_APP_ID), config.getProperty(Config.POSTAL_CODE));
+		
 		stringMetric = StringMetricBuilder
 			.with(new JaroWinkler())
 			.simplify(Simplifiers.toLowerCase())
@@ -147,16 +147,6 @@ public class MainWindow {
 		initialize();
 		//textSearch.setEnabled(false);
 		frame.setVisible(true);
-		
-		queryEditor = new QueryEditor(frame);
-		
-		ebay = new EbayMiner(Config.getInstance().getProperty(Config.EBAY_APP_ID));
-		//ebay.getSales("045496630140 -(famicom,sealed,cib,complete,box,lot,2,3,4,5,6,7,8,9,sega,duck, instructions,manual,case,sleeve,dust)", 0, 1450260250);
-		
-		// 1450260250 // current unix time
-		// 1448928000 // 2015-12-01
-		
-		
 	}
 
 	/**
@@ -326,6 +316,8 @@ public class MainWindow {
 		
 		textSearch.addMouseListener(new ContextMenuMouseListener());
 		//textArea.setComponentPopupMenu(new BasicContextMenu());
+		
+		queryEditor = new QueryEditor(frame);
 	}
 	
 	

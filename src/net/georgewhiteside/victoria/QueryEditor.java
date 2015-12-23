@@ -28,6 +28,9 @@ import javax.swing.JLabel;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.swing.SwingConstants;
 
 public class QueryEditor extends JDialog {
@@ -55,10 +58,18 @@ public class QueryEditor extends JDialog {
 		getContentPane().add(panel);
 		GridBagLayout gbl_panel = new GridBagLayout();
 		gbl_panel.columnWidths = new int[] {0, 0};
-		gbl_panel.rowHeights = new int[] {0, 0, 0};
+		gbl_panel.rowHeights = new int[] {0, 0, 0, 0};
 		gbl_panel.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		gbl_panel.rowWeights = new double[]{1.0, 0.0, Double.MIN_VALUE};
+		gbl_panel.rowWeights = new double[]{0.0, 1.0, 0.0, Double.MIN_VALUE};
 		panel.setLayout(gbl_panel);
+		
+		JLabel lblCharactersPer = new JLabel("350 characters per search; 99 characters per \"word\" (consecutive characters)");
+		GridBagConstraints gbc_lblCharactersPer = new GridBagConstraints();
+		gbc_lblCharactersPer.fill = GridBagConstraints.BOTH;
+		gbc_lblCharactersPer.insets = new Insets(0, 0, 5, 0);
+		gbc_lblCharactersPer.gridx = 0;
+		gbc_lblCharactersPer.gridy = 0;
+		panel.add(lblCharactersPer, gbc_lblCharactersPer);
 		
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -67,7 +78,7 @@ public class QueryEditor extends JDialog {
 		gbc_scrollPane.fill = GridBagConstraints.BOTH;
 		gbc_scrollPane.insets = new Insets(0, 0, 8, 0);
 		gbc_scrollPane.gridx = 0;
-		gbc_scrollPane.gridy = 0;
+		gbc_scrollPane.gridy = 1;
 		panel.add(scrollPane, gbc_scrollPane);
 		
 		textPane = new JTextPane();
@@ -79,18 +90,19 @@ public class QueryEditor extends JDialog {
 		GridBagConstraints gbc_panel_1 = new GridBagConstraints();
 		gbc_panel_1.fill = GridBagConstraints.HORIZONTAL;
 		gbc_panel_1.gridx = 0;
-		gbc_panel_1.gridy = 1;
+		gbc_panel_1.gridy = 2;
 		panel.add(panel_1, gbc_panel_1);
 		GridBagLayout gbl_panel_1 = new GridBagLayout();
-		gbl_panel_1.columnWidths = new int[] {0, 100, 100, 0};
+		gbl_panel_1.columnWidths = new int[] {0, 100, 100};
 		gbl_panel_1.rowHeights = new int[] {0, 0};
-		gbl_panel_1.columnWeights = new double[]{0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_panel_1.columnWeights = new double[]{0.0, 0.0};
 		gbl_panel_1.rowWeights = new double[]{0.0, Double.MIN_VALUE};
 		panel_1.setLayout(gbl_panel_1);
 		
 		lblCount = new JLabel("0");
 		lblCount.setHorizontalAlignment(SwingConstants.CENTER);
 		GridBagConstraints gbc_lblCount = new GridBagConstraints();
+		gbc_lblCount.insets = new Insets(0, 0, 0, 5);
 		gbc_lblCount.weightx = 1.0;
 		gbc_lblCount.anchor = GridBagConstraints.WEST;
 		gbc_lblCount.gridx = 0;
@@ -100,7 +112,7 @@ public class QueryEditor extends JDialog {
 		JButton btnSave = new JButton("Save");
 		btnSave.setAlignmentX(Component.CENTER_ALIGNMENT);
 		GridBagConstraints gbc_btnSave = new GridBagConstraints();
-		gbc_btnSave.insets = new Insets(0, 8, 0, 0);
+		gbc_btnSave.insets = new Insets(0, 8, 0, 5);
 		gbc_btnSave.fill = GridBagConstraints.HORIZONTAL;
 		gbc_btnSave.gridx = 1;
 		gbc_btnSave.gridy = 0;
@@ -109,7 +121,7 @@ public class QueryEditor extends JDialog {
 		btnSave.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				queryString = getText(textPane.getDocument());
+				queryString = getText();
 				setVisible(false);
 			}
 		});
@@ -143,8 +155,9 @@ public class QueryEditor extends JDialog {
 	public void setupAndShow(String videoGameTitle, String query) {
 		setTitle("Query String for " + videoGameTitle);
 		query = query == null ? "" : query;
-		query = collapseWhitespace(query);
-		textPane.setText(expandCsv(query));
+		//query = collapseWhitespace(query);
+		//textPane.setText(expandCsv(query));
+		textPane.setText(query);
 		queryString = null;
 		setVisible(true);
 	}
@@ -154,6 +167,8 @@ public class QueryEditor extends JDialog {
 	}
 	
 	private class QueryDocumentListener implements DocumentListener {
+		Pattern pattern = Pattern.compile("-\\(\\S+\\)?");
+		
 		@Override
 		public void insertUpdate(DocumentEvent e) {
 			updateCount(e.getDocument());
@@ -171,9 +186,15 @@ public class QueryEditor extends JDialog {
 		
 		private void updateCount(Document doc) {
 			String text = getText(doc);
-			String collapsed = collapseWhitespace(text);
-			collapsed = collapseCsv(collapsed);
-			lblCount.setText(String.valueOf(collapsed.length()));
+			Matcher matcher = pattern.matcher(text);
+			int maxLen = 0;
+			while(matcher.find()) {
+				String group = matcher.group();
+				if(group.length() > maxLen) {
+					maxLen = group.length();
+				}
+			}
+			lblCount.setText(String.valueOf(text.length()) + " - " + String.valueOf(maxLen));
 		}
 	}
 	
@@ -187,12 +208,20 @@ public class QueryEditor extends JDialog {
 		return text;
 	}
 	
+	private String getText() {
+		return getText(textPane.getDocument());
+	}
+	
+	private String collapse(String string) {
+		return collapseCsv(collapseWhitespace(string));
+	}
+	
 	private String collapseWhitespace(String string) {
 		return string.replaceAll("\\s+", " ");
 	}
 	
 	private String collapseCsv(String string) {
-		return string.replace(",  ", ",");
+		return string.replace(", ", ",");
 	}
 	
 	private String expandCsv(String string) {

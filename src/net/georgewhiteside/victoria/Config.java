@@ -7,7 +7,8 @@ import java.util.InvalidPropertiesFormatException;
 import java.util.Properties;
 
 public class Config {
-	private static final String FILENAME = "configuration.xml";
+	private static final String FILENAME = "victoria.properties";
+	//private static final String FILENAME = "configuration.xml";
 	private Properties properties = null;
 	private static Config instance = null;
 	
@@ -15,12 +16,14 @@ public class Config {
 	public static final String DB_USER = "databaseUser";
 	public static final String DB_PASS = "databasePass";
 	public static final String EBAY_APP_ID = "ebayAppID";
+	public static final String POSTAL_CODE = "postalCode";
 	
 	private Config() {
 		properties = new Properties();
 		try {
 			FileInputStream is = new FileInputStream(FILENAME);
-			properties.loadFromXML(is);
+			//properties.loadFromXML(is);
+			properties.load(is);
 			is.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();

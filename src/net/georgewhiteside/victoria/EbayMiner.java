@@ -24,15 +24,17 @@ public class EbayMiner {
 	private String ebayAppId;
 	
 	private ClientConfig clientConfig;
+	private String postalCode;
 	
 	private Logger log = LoggerFactory.getLogger(this.getClass());
 	
-	public EbayMiner(String ebayAppId) {
+	public EbayMiner(String ebayAppId, String postalCode) {
 		this.ebayAppId = ebayAppId;
 		clientConfig = new ClientConfig();
-		clientConfig.setApplicationId(ebayAppId);
 		clientConfig.setSoapMessageLoggingEnabled(false);
 		clientConfig.setHttpHeaderLoggingEnabled(false);
+		clientConfig.setApplicationId(ebayAppId);
+		this.postalCode = postalCode;
 	}
 	
 	/**
@@ -53,6 +55,7 @@ public class EbayMiner {
 		request.getItemFilter().add(Filter.soldItemsOnly());
 		request.getItemFilter().add(Filter.endTimeFrom(startDate));
 		request.getItemFilter().add(Filter.endTimeTo(endDate));
+		request.setBuyerPostalCode(postalCode);
 		
 		List<SearchItem> searchResults = new ArrayList<SearchItem>();
 

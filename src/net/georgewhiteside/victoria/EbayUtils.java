@@ -40,24 +40,6 @@ public class EbayUtils {
 		return itemPrice + shippingPrice;
 	}
 	
-	public static String prepareQuery(String input) {
-		String[] terms = input.split("\\s+");
-		
-		boolean termsOkay = true;
-		for(String term : terms) {
-			if(term.length() > 99) {
-				termsOkay = false;
-				break;
-			}
-		}
-		
-		if(termsOkay && input.length() <= 350) {
-			return input;
-		}
-		
-		return "";
-	}
-	
 	private static int toCents(double floatingAmount) {
 		return (int) (floatingAmount * 100 + 0.5);
 	}
@@ -81,8 +63,12 @@ public class EbayUtils {
 	public static List<VideoGameSale> toVideoGameSales(List<SearchItem> searchItems, int videoGameId) {
 		// convert data to friendlier container format
 		List<VideoGameSale> videoGameSales = new ArrayList<VideoGameSale>();
+		int i = 0;
+		int total = searchItems.size();
 		for(SearchItem item : searchItems) {
+			System.out.println("processing " + i + " of " + total + "...");
 			videoGameSales.add(toVideoGameSale(item, videoGameId));
+			i++;
 		}
 		
 		return videoGameSales;
