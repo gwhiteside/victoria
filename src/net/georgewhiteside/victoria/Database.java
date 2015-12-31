@@ -124,15 +124,6 @@ public class Database {
 		return timestamp;
 	}
 	
-	/*
-	public long getSecondsSinceUpdate(VideoGame videoGame) {
-		// TimeUnit.SECONDS
-		long updateUnixTime = getSearchTimestamp(videoGame);
-		long currentUnixTime = System.currentTimeMillis() / 1000;
-		return currentUnixTime - updateUnixTime;
-	}
-	*/
-	
 	public List<VideoGameSale> getPriceHistoryRange(int videoGameId, long start, long end) {
 		List<VideoGameSale> list = new ArrayList<VideoGameSale>();
 		
@@ -260,6 +251,43 @@ public class Database {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public List<VideoGameSale> getPriceHistory(VideoGame vg) {
+		/*
+		SELECT price, timestamp, sale_id, title
+		FROM sale
+		WHERE product_id = ?
+		ORDER BY timestamp;
+		*/
+		
+		PriceHistory history = null;
+		List<VideoGameSale> sales = new ArrayList<VideoGameSale>();
+		
+		String sql = FileUtil.loadTextResource("/res/get_prices.sql");
+		
+		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
+			PreparedStatement statement = connection.prepareStatement(sql)) {
+			
+			statement.setInt(1, vg.getId());
+			
+			try(ResultSet resultSet = statement.executeQuery();) {
+				while(resultSet.next()) {
+					int price = resultSet.getInt("price");
+					long timestamp = resultSet.getLong("timestamp");
+					long saleId = resultSet.getLong("sale_id");
+					String title = resultSet.getString("title");
+					
+					VideoGameSale vgs = new VideoGameSale(saleId, vg.getId(), title, price, timestamp);
+					sales.add(vgs);
+				}
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return sales;
 	}
 	
 	

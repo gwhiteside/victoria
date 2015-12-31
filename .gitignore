@@ -2,6 +2,9 @@
 configuration.xml
 victoria.properties
 
+# other program stuff
+logs/
+
 # Eclipse
 bin/
 .settings/

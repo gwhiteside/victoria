@@ -5,6 +5,9 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.TimeZone;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.ebay.services.client.ClientConfig;
 import com.ebay.services.client.FindingServiceClientFactory;
 import com.ebay.services.finding.Amount;
@@ -21,6 +24,7 @@ public class EbayUtils {
 	
 	public static String EBAY_CAT_VIDEO_GAMES = "139973";
 	private static final TimeZone TZ_UTC = TimeZone.getTimeZone("Etc/UTC");
+	private static Logger log = LoggerFactory.getLogger(EbayUtils.class);
 
 	private EbayUtils() {
 	}
@@ -45,6 +49,12 @@ public class EbayUtils {
 	}
 	
 	public static int toCents(Amount amount) {
+		String currencyId = amount.getCurrencyId();
+		
+		if(currencyId == null) {
+			throw new NullPointerException("toCents: Amount's CurrencyId was null");
+		}
+		
 		if(amount.getCurrencyId().equals("USD") == false) {
 			throw new IllegalArgumentException("Uh oh, convertedCurrentPrice's currencyId was not USD");
 		}
@@ -55,6 +65,15 @@ public class EbayUtils {
 	public static VideoGameSale toVideoGameSale(SearchItem sale, int videoGameId) {
 			long saleId = Long.parseLong(sale.getItemId());
 			long timestamp = EbayUtils.getEndTimeUnix(sale);
+			
+			// sometimes a sale has a glitched shipping calculation due to eBay error, user error, or both
+			// if that happens, no shippingServiceCost is reported which we'll indicate by returning null
+			Amount amount = sale.getShippingInfo().getShippingServiceCost();
+			if(amount == null) {
+				log.warn("saleId {} - glitched calculated shipping detected; discarding", saleId); 
+				return null;
+			}
+			
 			int price = EbayUtils.getPriceWithShipping(sale);
 			String title = sale.getTitle();
 			return new VideoGameSale(saleId, videoGameId, title, price, timestamp);
@@ -65,7 +84,12 @@ public class EbayUtils {
 		List<VideoGameSale> videoGameSales = new ArrayList<VideoGameSale>();
 		
 		for(SearchItem item : searchItems) {
-			videoGameSales.add(toVideoGameSale(item, videoGameId));
+			VideoGameSale vgs = toVideoGameSale(item, videoGameId);
+			if(vgs != null) {
+				videoGameSales.add(vgs);
+			} else {
+				// glitched calculated shipping; do nothing with it
+			}
 		}
 		
 		return videoGameSales;

@@ -147,6 +147,8 @@ public class MainWindow {
 		initialize();
 		//textSearch.setEnabled(false);
 		frame.setVisible(true);
+		
+		// TODO run background timer (run immediately then retrigger daily) to check database entries; anything older than, say, a month, gets updated
 	}
 
 	/**
@@ -305,15 +307,6 @@ public class MainWindow {
 		gbc_scrollPrice.gridy = 2;
 		panel.add(scrollPrice, gbc_scrollPrice);
 		
-		textField = new JTextField();
-		GridBagConstraints gbc_textField = new GridBagConstraints();
-		gbc_textField.gridwidth = 2;
-		gbc_textField.fill = GridBagConstraints.HORIZONTAL;
-		gbc_textField.gridx = 0;
-		gbc_textField.gridy = 4;
-		panel.add(textField, gbc_textField);
-		textField.setColumns(10);
-		
 		textSearch.addMouseListener(new ContextMenuMouseListener());
 		//textArea.setComponentPopupMenu(new BasicContextMenu());
 		
@@ -415,7 +408,6 @@ public class MainWindow {
 			updateSearchResults(text);
 		}
 	};
-	private JTextField textField;
 	
 	
 	

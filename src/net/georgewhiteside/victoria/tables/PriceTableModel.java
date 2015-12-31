@@ -3,7 +3,9 @@ package net.georgewhiteside.victoria.tables;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Formatter;
 import java.util.Iterator;
 import java.util.List;
@@ -15,7 +17,9 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.text.NumberFormatter;
 
+import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +48,8 @@ public class PriceTableModel extends AbstractTableModel {
 	Random random = new Random();
 	Database database;
 	EbayMiner ebay;
+	
+	
 	
 	Logger log = LoggerFactory.getLogger(this.getClass());
 	
@@ -206,7 +212,7 @@ public class PriceTableModel extends AbstractTableModel {
 		    	List<VideoGameSale> videoGameSales;
 		    	
 		    	int interval = Integer.valueOf(config.getProperty(Config.UPDATE_INTERVAL_DAYS));
-		    	if(daysSinceUpdate > interval) {
+		    	if(daysSinceUpdate >= 1) {
 		    		
 		    		String searchString = database.getSearchQuery(vg);
 		    		
@@ -226,12 +232,53 @@ public class PriceTableModel extends AbstractTableModel {
 		    			
 		    			// update search timestamp
 		    			database.updateSearchTimestamp(vg.getId(), currentUnixTime);
+		    			
+		    			lastUpdateUnixTime = currentUnixTime;
 		    		}
 		    	}
 		    	
 		    	// calculate and return median price
+		    	List<VideoGameSale> sales = database.getPriceHistory(vg);
 		    	
-				return "0"; // return String.valueOf(daysSinceUpdate);
+		    	if(sales.isEmpty()) {
+		    		return null; // TODO currently interpreted as "no search string"; should be distinct "no data available" condition
+		    	}
+		    	
+		    	Collections.sort(sales, VideoGameSale.timestampComparator());
+		    	VideoGameSale max = sales.get(sales.size() - 1);
+		    	long lastTimestamp = max.getTimestamp();
+		    	long firstTimestamp = lastTimestamp - TimeUnit.DAYS.toSeconds(28);
+		    	
+		    	// grab all the elements between firstTimestamp and lastTimestamp
+		    	
+		    	List<VideoGameSale> monthSales = new ArrayList<VideoGameSale>();
+		    	
+		    	// TODO simplify this garbage
+		    	for(int i = sales.size() - 1; i >= 0; i--) {
+		    		VideoGameSale vgs = sales.get(i);
+		    		if(vgs.getTimestamp() >= firstTimestamp) {
+		    			monthSales.add(vgs);
+		    		} else {
+		    			break;
+		    		}
+		    	}
+		    	
+		    	double[] prices = new double[monthSales.size()];
+		    	
+		    	for(int i = 0; i < prices.length; i++) {
+		    		prices[i] = monthSales.get(i).getPrice();
+		    	}
+		    	
+		    	// calculate median
+		    	
+		    	Median median = new Median();
+		    	double value = median.evaluate(prices);
+		    	
+		    	String result = NumberFormat.getCurrencyInstance().format(value / 100.0);
+		    	
+		    	//Collections.
+		    	
+				return result; // return String.valueOf(daysSinceUpdate);
 			}
 			
 			@Override
