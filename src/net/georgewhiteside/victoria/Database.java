@@ -261,7 +261,6 @@ public class Database {
 		ORDER BY timestamp;
 		*/
 		
-		PriceHistory history = null;
 		List<VideoGameSale> sales = new ArrayList<VideoGameSale>();
 		
 		String sql = FileUtil.loadTextResource("/res/get_prices.sql");
