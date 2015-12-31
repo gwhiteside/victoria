@@ -57,6 +57,7 @@ public class PriceTableModel extends AbstractTableModel {
 		rowData = new ArrayList<PriceRow>();
 		database = vgDatabase;
 		ebay = ebayMiner;
+		this.fireTableDataChanged();
 	}
 
 	@Override
@@ -130,10 +131,10 @@ public class PriceTableModel extends AbstractTableModel {
 		fireTableRowsDeleted(index, index);
 	}
 	
-	public int getPriceTotal() {
-		int total = 0;
+	public double getPriceTotal() {
+		double total = 0;
 		for(PriceRow row : rowData) {
-			// add totals
+			total += row.getPrice();
 		}
 		return total;
 	}
@@ -166,6 +167,7 @@ public class PriceTableModel extends AbstractTableModel {
 	public class PriceRow {
 		VideoGame videoGame;
 		String priceColumnString;
+		double price;
 		boolean needsQuery = false;
 		
 		public PriceRow(VideoGame vg) {
@@ -181,6 +183,10 @@ public class PriceTableModel extends AbstractTableModel {
 		
 		public String getPriceColumnString() {
 			return priceColumnString;
+		}
+		
+		public double getPrice() {
+			return price;
 		}
 		
 		public void update() {
@@ -273,12 +279,10 @@ public class PriceTableModel extends AbstractTableModel {
 		    	
 		    	Median median = new Median();
 		    	double value = median.evaluate(prices);
-		    	
+		    	price = value / 100.0; // TODO is it a poor idea to update this here?
 		    	String result = NumberFormat.getCurrencyInstance().format(value / 100.0);
 		    	
-		    	//Collections.
-		    	
-				return result; // return String.valueOf(daysSinceUpdate);
+				return result;
 			}
 			
 			@Override
@@ -288,11 +292,11 @@ public class PriceTableModel extends AbstractTableModel {
 					if(value == null) {
 						setNeedsQuery(true);
 		    			log.debug("No search string for {}", priceRow.getVideoGame().getTitle());
+		    			price = 0;
 						priceRow.setPriceColumnString("No data");
 					} else {
 						setNeedsQuery(false);
-		    			//log.debug("\"{}\" search string length: {}", vg.getTitle(), searchString.length());
-						priceRow.setPriceColumnString(get() + " days");
+						priceRow.setPriceColumnString(get());
 					}
 					firePriceUpdated(priceRow);
 				} catch (InterruptedException | ExecutionException e) {
