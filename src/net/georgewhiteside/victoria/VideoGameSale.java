@@ -45,11 +45,24 @@ public class VideoGameSale {
 		}
 	}
 	
+	private static class SortSaleId implements Comparator<VideoGameSale> {
+		@Override
+		public int compare(VideoGameSale o1, VideoGameSale o2) {
+			long a = o1.getSaleId();
+			long b = o2.getSaleId();
+			return a < b ? -1 : a == b ? 0 : 1;
+		}
+	}
+	
 	public static Comparator<VideoGameSale> timestampComparator() {
 		return new SortTimestamp();
 	}
 	
 	public static Comparator<VideoGameSale> priceComparator() {
 		return new SortPrice();
+	}
+	
+	public static Comparator<VideoGameSale> saleIdComparator() {
+		return new SortSaleId();
 	}
 }

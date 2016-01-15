@@ -1,2 +1,2 @@
-INSERT INTO sale (sale_id, product_id, timestamp, price, title)
+INSERT IGNORE INTO sale (sale_id, product_id, timestamp, price, title)
 VALUES (?, ?, ?, ?, ?);

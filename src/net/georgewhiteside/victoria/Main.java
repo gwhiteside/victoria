@@ -11,15 +11,19 @@ import org.slf4j.LoggerFactory;
 
 // Videogame Investment Calculator and Tracker for Optimizing Returns on Internet Auctions
 
-// 350 characters per search; 99 characters per word ("word" defined as consecutive characters
+// HikariCP? just go with sqlite?
 
-// HikariCP, BoneCP, c3p0, DBCP
+// filter by system
 
-// provide median and interquartile range
+// price display options -- price to buy individually / estimated price to sell individually (subtract ebay fees, shipping cost)
 
-// Calendar and TimeUnit
+// track and respect daily api request volume
 
-// NumberFormat.getCurrencyInstance()
+// auto-update; every 24 hours check search table for update timestamps and update anything older than (say) 4 weeks; possibly configurable
+
+// exclude sales in freakin' Australia... Canada too?
+
+// indicate rising and falling prices with color or symbol (help spot/avoid temporary fad price inflations)
 
 public class Main
 {

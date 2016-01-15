@@ -27,6 +27,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -143,6 +146,7 @@ public class MainWindow {
 		database = new Database(dbUrl, dbUser, dbPass);
 		
 		ebay = new EbayMiner(config.getProperty(Config.EBAY_APP_ID), config.getProperty(Config.POSTAL_CODE));
+		ebay.setIgnoreCountries("CA", "AU"); // shipping charges suck for Canada and Australia
 		
 		stringMetric = StringMetricBuilder
 			.with(new JaroWinkler())
@@ -154,6 +158,8 @@ public class MainWindow {
 		frame.setVisible(true);
 		
 		// TODO run background timer (run immediately then retrigger daily) to check database entries; anything older than, say, a month, gets updated
+		
+		
 	}
 
 	/**

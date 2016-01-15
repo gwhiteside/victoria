@@ -1,6 +1,7 @@
 package net.georgewhiteside.victoria;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ public class EbayMiner {
 	
 	private ClientConfig clientConfig;
 	private String postalCode;
+	private String[] ignoreCountries;
 	
 	private Logger log = LoggerFactory.getLogger(this.getClass());
 	
@@ -35,6 +37,14 @@ public class EbayMiner {
 		clientConfig.setHttpHeaderLoggingEnabled(false);
 		clientConfig.setApplicationId(ebayAppId);
 		this.postalCode = postalCode;
+	}
+	
+	public void setIgnoreCountries(String... countries) {
+		if(countries.length > 25) {
+			throw new IllegalArgumentException("LocatedIn ItemFilter may have no more than 25 arguments");
+		} else {
+			ignoreCountries = countries;
+		}
 	}
 	
 	/**
@@ -55,10 +65,17 @@ public class EbayMiner {
 		request.getItemFilter().add(Filter.soldItemsOnly());
 		request.getItemFilter().add(Filter.endTimeFrom(startDate));
 		request.getItemFilter().add(Filter.endTimeTo(endDate));
+		//request.getItemFilter().add(Filter.locatedIn("US", "JP", "CN", "TW", "TH", "TR", "HK", "SG")); // actually just easier to programmatically reject CA and AU
 		request.setBuyerPostalCode(postalCode);
 		
 		List<SearchItem> searchResults = new ArrayList<SearchItem>();
 
+		/*
+		for(int i = 0, totalPages = 1, pageNumber = 0; pageNumber < totalPages; i++) {
+			
+		}
+		*/
+		
 		int i = 0;
 		int totalPages, pageNumber;
 		
@@ -79,6 +96,21 @@ public class EbayMiner {
 			logResponsePagination(pagination);
 			
 		} while(pageNumber < totalPages);
+		
+		// remove any ignored countries from the collection
+		if(ignoreCountries != null) {
+			Iterator<SearchItem> iter = searchResults.iterator();
+			while(iter.hasNext()) {
+				SearchItem item = iter.next();
+				for(String country : ignoreCountries) {
+					if(item.getCountry().equals(country)) {
+						log.debug("Removed search result from country: {}", item.getCountry());
+						iter.remove();
+						break;
+					}
+				}
+			}
+		}
 		
 		return searchResults;
 	}
@@ -129,10 +161,23 @@ public class EbayMiner {
 			return filter(ItemFilterType.END_TIME_TO, EbayUtils.unixTimeISO8601Exclusive(unixTime));
 		}
 		
-		private static ItemFilter filter(ItemFilterType type, String value) {
+		/**
+		 * up to 25 two-letter ISO 3166 country codes
+		 * @return
+		 */
+		private static ItemFilter locatedIn(String... countries) {
+			if(countries.length > 25) {
+				throw new IllegalArgumentException("LocatedIn ItemFilter may have no more than 25 arguments");
+			}
+			return filter(ItemFilterType.LOCATED_IN, countries);
+		}
+		
+		private static ItemFilter filter(ItemFilterType type, String... values) {
 			ItemFilter filter = new ItemFilter();
 			filter.setName(type);
-			filter.getValue().add(value);
+			for(String value : values) {
+				filter.getValue().add(value);
+			}
 			return filter;
 		}
 	}

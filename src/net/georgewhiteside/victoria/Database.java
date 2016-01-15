@@ -1,5 +1,6 @@
 package net.georgewhiteside.victoria;
 
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -26,6 +27,7 @@ public class Database {
 	
 	private List<VideoGame> videoGameList;
 	private int initialCapacity = 4000; // very minor optimization; set higher than number of products in database
+	private int maxBatchSize = Integer.MAX_VALUE; // was doing batches of 100, but I guess if it's not an issue I prefer having completely atomic batch transactions
 	
 	Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -207,8 +209,19 @@ public class Database {
 		saveSearchQuery(vg.getId(), queryString);
 	}
 	
-	public void insertSales(List<VideoGameSale> sales) {
+	/**
+	 * 
+	 * @param sales
+	 * @return true if successful, false if something may have gone wrong
+	 */
+	public boolean insertSales(List<VideoGameSale> sales) {
 		String sql = FileUtil.loadTextResource("/res/insert_sale.sql");
+		
+		// TODO uses an INSERT IGNORE to deal with occasional duplicate PKs (same sale for two or more search terms) which
+		// could allow other unforeseen errors to creep by too... should find a more robust solution here\
+		
+		// TODO maybe handle the search updated timestamp here; sort the whole list by timestamp, insert them in batches, and
+		// when a given batch completes, update the search timestamp to the highest value in that batch
 		
 		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
 			PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -224,7 +237,7 @@ public class Database {
 				statement.addBatch();
 				i++;
 				
-				if(i >= 50) {
+				if(i >= maxBatchSize) {
 					statement.executeBatch();
 					i = 0;
 				}
@@ -233,9 +246,15 @@ public class Database {
 			if(i > 0) {
 				statement.executeBatch();
 			}
+		} catch (BatchUpdateException bue) {
+			bue.printStackTrace();
+			return false;
 		} catch (SQLException e) {
 			e.printStackTrace();
+			return false;
 		}
+		
+		return true;
 	}
 	
 	public void updateSearchTimestamp(int productId, long timestamp) {
@@ -287,6 +306,10 @@ public class Database {
 		}
 		
 		return sales;
+	}
+	
+	public void getGamesNotUpdatedSince(long unixtime) {
+		
 	}
 	
 	

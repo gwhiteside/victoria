@@ -210,7 +210,7 @@ public class PriceTableModel extends AbstractTableModel {
 				
 				final VideoGame vg = priceRow.getVideoGame();
 				
-				long lastUpdateUnixTime = database.getSearchTimestamp(videoGame);
+				long lastUpdateUnixTime = database.getSearchTimestamp(vg);
 				long currentUnixTime = System.currentTimeMillis() / 1000;
 				long secondsSinceUpdate = currentUnixTime - lastUpdateUnixTime;
 		    	int daysSinceUpdate = (int) TimeUnit.SECONDS.toDays(secondsSinceUpdate);
@@ -234,12 +234,13 @@ public class PriceTableModel extends AbstractTableModel {
 		    			videoGameSales = EbayUtils.toVideoGameSales(searchItems, vg.getId());
 		    			
 		    			// commit sales data to database
-		    			database.insertSales(videoGameSales);
-		    			
-		    			// update search timestamp
-		    			database.updateSearchTimestamp(vg.getId(), currentUnixTime);
-		    			
-		    			lastUpdateUnixTime = currentUnixTime;
+		    			if(database.insertSales(videoGameSales)) {
+		    				// update search timestamp
+		    				database.updateSearchTimestamp(vg.getId(), currentUnixTime);
+		    				lastUpdateUnixTime = currentUnixTime;
+		    			} else {
+		    				log.error("There was an error inserting database records; not updating search timestamp");
+		    			}
 		    		}
 		    	}
 		    	
