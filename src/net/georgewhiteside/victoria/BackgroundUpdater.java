@@ -25,19 +25,6 @@ public class BackgroundUpdater {
 	
 	ProgressDialog dialog;
 	
-	/*
-	static class Chunk {
-		enum Type {Val, Max, Min}
-		
-		Type type;
-		int value;
-		
-		public Chunk(Type type, int value) {
-			this.type = type;
-			this.value = value;
-		}
-	}*/
-	
 	public class Updater extends SwingWorker<Void, Integer> {
 		
 		int max = 0;
