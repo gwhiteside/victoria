@@ -162,7 +162,7 @@ public class PriceTableModel extends AbstractTableModel {
 		fireTableRowsInserted(index, index);
 	}
 	
-	private void removeRow(int index) {
+	public void removeRow(int index) {
 		rowData.remove(index);
 		fireTableRowsDeleted(index, index);
 	}

@@ -238,20 +238,20 @@ public class MainWindow {
 		});
 		tablePrice.setModel(priceTableModel);
 		JPopupMenu popupMenu = new JPopupMenu();
-		JMenuItem editItem = new JMenuItem("Edit");
+		JMenuItem editItem = new JMenuItem("Edit query...");
 		editItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// query editor is a modal dialog, so this is all done on the dispatch thread
 				// serially to enforce sane program flow
 				
-				int row = tablePrice.getSelectedRow();
+				int rowIndex = tablePrice.getSelectedRow();
 				
-				if(row == -1) {
+				if(rowIndex == -1) {
 					return;
 				}
 				
-				PriceRow priceRow = ((PriceTableModel)tablePrice.getModel()).getRow(row);
+				PriceRow priceRow = ((PriceTableModel)tablePrice.getModel()).getRow(rowIndex);
 				VideoGame vg = priceRow.getVideoGame();
 				
 				queryEditor.setupAndShow(vg.getTitle(), database.getSearchQuery(vg));
@@ -271,6 +271,25 @@ public class MainWindow {
 			}
 		});
 		popupMenu.add(editItem);
+		
+		popupMenu.addSeparator();
+		
+		JMenuItem removeItem = new JMenuItem("Remove");
+		removeItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int rowIndex = tablePrice.getSelectedRow();
+				
+				if(rowIndex == -1) {
+					return;
+				}
+				
+				PriceTableModel model = (PriceTableModel) tablePrice.getModel();
+				model.removeRow(rowIndex);
+			}
+		});
+		popupMenu.add(removeItem);
+		
 		tablePrice.setComponentPopupMenu(popupMenu);
 		JScrollPane scrollPrice = new JScrollPane(tablePrice);
 		
