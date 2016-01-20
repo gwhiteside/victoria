@@ -237,9 +237,10 @@ public class MainWindow {
 			}
 		});
 		tablePrice.setModel(priceTableModel);
+		
 		JPopupMenu popupMenu = new JPopupMenu();
-		JMenuItem editItem = new JMenuItem("Edit query...");
-		editItem.addActionListener(new ActionListener() {
+		JMenuItem editQueryItem = new JMenuItem("Edit query...");
+		editQueryItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// query editor is a modal dialog, so this is all done on the dispatch thread
@@ -270,7 +271,7 @@ public class MainWindow {
 				}
 			}
 		});
-		popupMenu.add(editItem);
+		popupMenu.add(editQueryItem);
 		
 		popupMenu.addSeparator();
 		

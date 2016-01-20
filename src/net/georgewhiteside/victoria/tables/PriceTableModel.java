@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.text.NumberFormatter;
 
@@ -34,6 +36,8 @@ import net.georgewhiteside.victoria.VideoGameSale;
 
 // what I should be doing is (in parallel to the rowData list) tracking these pricerows in a set (or videogame -> price in a map)
 // 
+
+// table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
 @SuppressWarnings("serial")
 public class PriceTableModel extends AbstractTableModel {
@@ -58,7 +62,28 @@ public class PriceTableModel extends AbstractTableModel {
 		rowData = new ArrayList<PriceRow>();
 		database = vgDatabase;
 		ebay = ebayMiner;
-		this.fireTableDataChanged();
+		fireTableDataChanged();
+		
+		addTableModelListener(new TableModelListener() {
+			@Override
+			public void tableChanged(TableModelEvent e) {
+				if(e.getType() == TableModelEvent.UPDATE) {
+					int firstRow = e.getFirstRow();
+					int lastRow = e.getLastRow();
+					
+					if(firstRow == TableModelEvent.HEADER_ROW) {
+						firstRow += 1;
+					}
+					
+					int col = e.getColumn();
+					if(col == TableModelEvent.ALL_COLUMNS || getColumnName(col).equals(QUANTITY)) {
+						for(int row = firstRow; row <= lastRow; row++) {
+							log.debug("changed value");
+						}
+					}
+				}
+			}
+		});
 	}
 
 	@Override
@@ -92,6 +117,31 @@ public class PriceTableModel extends AbstractTableModel {
 			case QUANTITY: return priceRow.getQuantity();
 		}
 		return null;
+	}
+	
+	@Override
+	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+		if(getColumnName(columnIndex).equals(QUANTITY)) {
+			PriceRow priceRow = getRow(rowIndex);
+			
+			try {
+				int newValue = Integer.parseInt(aValue.toString());
+				if(newValue >= 0) {
+					priceRow.setQuantity(newValue);
+					fireTableCellUpdated(rowIndex, columnIndex);
+					return;
+				}
+			} catch(Exception e) {
+				
+			}
+			
+			log.debug("Attempted to set invalid quantity for price row. Value must be a positive integer.");
+		}
+    }
+	
+	@Override
+	public boolean isCellEditable(int rowIndex, int columnIndex) {
+		return getColumnName(columnIndex).equals(QUANTITY);
 	}
 	
 	private int getColumnIndex(String label) {

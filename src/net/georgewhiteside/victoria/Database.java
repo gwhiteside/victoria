@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.georgewhiteside.utility.FileUtil;
+import net.georgewhiteside.utility.Util;
 
 import com.google.common.collect.ImmutableList;
 
@@ -44,7 +44,7 @@ public class Database {
 	private List<VideoGame> getAllVideoGamesFromDb() {
 		// TODO try with resources
 		List<VideoGame> videoGames = new ArrayList<VideoGame>(initialCapacity);
-		String query = FileUtil.loadTextResource("/res/get_video_games.sql");
+		String query = Util.loadTextResource("/res/get_video_games.sql");
 		
 		try {
 			Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
@@ -77,7 +77,7 @@ public class Database {
 	
 	
 	private List<VideoGameSale> getSales(int videoGameId) {
-		String query = FileUtil.loadTextResource("/res/get_prices.sql");
+		String query = Util.loadTextResource("/res/get_prices.sql");
 		List<VideoGameSale> list = new ArrayList<VideoGameSale>();
 		
 		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
@@ -108,7 +108,7 @@ public class Database {
 	// TODO getSearchQuery and getSearchTimestamp can be merged and return a Search object or whatever
 	
 	public long getSearchTimestamp(VideoGame videoGame) {
-		String query = FileUtil.loadTextResource("/res/get_search.sql");
+		String query = Util.loadTextResource("/res/get_search.sql");
 		long timestamp = 0;
 		
 		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
@@ -139,7 +139,7 @@ public class Database {
 	
 	private String getSearchQuery(int id) {
 		// TODO try with resources
-		String query = FileUtil.loadTextResource("/res/get_search.sql");
+		String query = Util.loadTextResource("/res/get_search.sql");
 		String queryString = null;
 		
 		try {
@@ -177,8 +177,8 @@ public class Database {
 		// does an insert/ignore followed by update in a single transaction...
 		// not sure this is the best and simplest way of portably doing this without additional libraries
 		
-		String insertQuery = FileUtil.loadTextResource("/res/insert_search_string.sql");
-		String updateQuery = FileUtil.loadTextResource("/res/update_search_string.sql");
+		String insertQuery = Util.loadTextResource("/res/insert_search_string.sql");
+		String updateQuery = Util.loadTextResource("/res/update_search_string.sql");
 		
 		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
 			PreparedStatement insertStatement = connection.prepareStatement(insertQuery);
@@ -214,7 +214,7 @@ public class Database {
 	 * @return true if successful, false if something may have gone wrong
 	 */
 	public boolean insertSales(List<VideoGameSale> sales) {
-		String sql = FileUtil.loadTextResource("/res/insert_sale.sql");
+		String sql = Util.loadTextResource("/res/insert_sale.sql");
 		
 		// TODO uses an INSERT IGNORE to deal with occasional duplicate PKs (same sale for two or more search terms) which
 		// could allow other unforeseen errors to creep by too... should find a more robust solution here\
@@ -257,7 +257,7 @@ public class Database {
 	}
 	
 	public void updateSearchTimestamp(int productId, long timestamp) {
-		String sql = FileUtil.loadTextResource("/res/update_search_timestamp.sql");
+		String sql = Util.loadTextResource("/res/update_search_timestamp.sql");
 		
 		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
 			PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -281,7 +281,7 @@ public class Database {
 		
 		List<VideoGameSale> sales = new ArrayList<VideoGameSale>();
 		
-		String sql = FileUtil.loadTextResource("/res/get_prices.sql");
+		String sql = Util.loadTextResource("/res/get_prices.sql");
 		
 		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
 			PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -310,7 +310,7 @@ public class Database {
 	public List<Search> getSearchesOlderThan(long unixtime) {
 		List<Search> list = new ArrayList<Search>();
 		
-		String sql = FileUtil.loadTextResource("/res/get_searches_older_than.sql");
+		String sql = Util.loadTextResource("/res/get_searches_older_than.sql");
 		
 		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
 			PreparedStatement statement = connection.prepareStatement(sql);) {
