@@ -175,7 +175,9 @@ public class PriceTableModel extends AbstractTableModel {
 			update();
 		}
 		
-		//public String getPrice() { return "0"; }
+		public void firePriceUpdate() {
+			firePriceUpdated(this);
+		}
 		
 		public VideoGame getVideoGame() { return videoGame; }
 		
@@ -189,140 +191,24 @@ public class PriceTableModel extends AbstractTableModel {
 			return price;
 		}
 		
+		public void setPrice(double p) {
+			price = p;
+		}
+		
 		public void update() {
-			new PriceRowUpdater(this).execute();
+			new PriceRowUpdater(this, database, ebay).execute();
 		}
 		
 		public boolean needsQuery() { return needsQuery; }
 		
-		private class PriceRowUpdater extends SwingWorker<String, String> {
-			PriceRow priceRow;
-			Config config;
-
-			public PriceRowUpdater(PriceRow pr) {
-				priceRow = pr;
-				config = Config.getInstance();
-			}
-			
-			@Override
-			protected String doInBackground() throws Exception {
-				publish("Updating...");
-				
-				final VideoGame vg = priceRow.getVideoGame();
-				
-				long lastUpdateUnixTime = database.getSearchTimestamp(vg);
-				long currentUnixTime = System.currentTimeMillis() / 1000;
-				long secondsSinceUpdate = currentUnixTime - lastUpdateUnixTime;
-		    	int daysSinceUpdate = (int) TimeUnit.SECONDS.toDays(secondsSinceUpdate);
-		    	
-		    	List<VideoGameSale> videoGameSales;
-		    	
-		    	int interval = Integer.valueOf(config.getProperty(Config.UPDATE_INTERVAL_DAYS));
-		    	if(daysSinceUpdate >= 1) {
-		    		
-		    		String searchString = database.getSearchQuery(vg);
-		    		
-		    		if(searchString == null || searchString.length() == 0) {
-		    			
-		    			return null; //publish("No data");
-		    			
-		    		} else {
-		    			// get updated search results
-		    			List<SearchItem> searchItems = ebay.getSales(searchString, lastUpdateUnixTime, currentUnixTime);
-		    			
-		    			// convert data to friendlier container format
-		    			videoGameSales = EbayUtils.toVideoGameSales(searchItems, vg.getId());
-		    			
-		    			// commit sales data to database
-		    			if(database.insertSales(videoGameSales)) {
-		    				// update search timestamp
-		    				database.updateSearchTimestamp(vg.getId(), currentUnixTime);
-		    				lastUpdateUnixTime = currentUnixTime;
-		    			} else {
-		    				log.error("There was an error inserting database records; not updating search timestamp");
-		    			}
-		    		}
-		    	}
-		    	
-		    	// calculate and return median price
-		    	List<VideoGameSale> sales = database.getPriceHistory(vg);
-		    	
-		    	if(sales.isEmpty()) {
-		    		return null; // TODO currently interpreted as "no search string"; should be distinct "no data available" condition
-		    	}
-		    	
-		    	Collections.sort(sales, VideoGameSale.timestampComparator());
-		    	VideoGameSale max = sales.get(sales.size() - 1);
-		    	long lastTimestamp = max.getTimestamp();
-		    	long firstTimestamp = lastTimestamp - TimeUnit.DAYS.toSeconds(28);
-		    	
-		    	// grab all the elements between firstTimestamp and lastTimestamp
-		    	
-		    	List<VideoGameSale> monthSales = new ArrayList<VideoGameSale>();
-		    	
-		    	// TODO simplify this garbage
-		    	for(int i = sales.size() - 1; i >= 0; i--) {
-		    		VideoGameSale vgs = sales.get(i);
-		    		if(vgs.getTimestamp() >= firstTimestamp) {
-		    			monthSales.add(vgs);
-		    		} else {
-		    			break;
-		    		}
-		    	}
-		    	
-		    	double[] prices = new double[monthSales.size()];
-		    	
-		    	for(int i = 0; i < prices.length; i++) {
-		    		prices[i] = monthSales.get(i).getPrice();
-		    	}
-		    	
-		    	// calculate median
-		    	
-		    	Median median = new Median();
-		    	double value = median.evaluate(prices);
-		    	price = value / 100.0; // TODO is it a poor idea to update this here?
-		    	String result = NumberFormat.getCurrencyInstance().format(value / 100.0);
-		    	
-				return result;
-			}
-			
-			@Override
-			protected void done() {
-				try {
-					Object value = get();
-					if(value == null) {
-						setNeedsQuery(true);
-		    			log.debug("No search string for {}", priceRow.getVideoGame().getTitle());
-		    			price = 0;
-						priceRow.setPriceColumnString("No data");
-					} else {
-						setNeedsQuery(false);
-						priceRow.setPriceColumnString(get());
-					}
-					firePriceUpdated(priceRow);
-				} catch (InterruptedException | ExecutionException e) {
-					e.printStackTrace();
+		public void setNeedsQuery(boolean nq) {
+			needsQuery = nq;
+			EventQueue.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					fireRowUpdated(PriceRow.this);
 				}
-			}
-			
-			@Override
-		     protected void process(List<String> chunks) {
-		         for (String string : chunks) {
-		        	 priceRow.setPriceColumnString(string);
-		             firePriceUpdated(priceRow);
-		         }
-		     }
-			
-			private void setNeedsQuery(boolean nq) {
-				needsQuery = nq;
-				EventQueue.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						fireRowUpdated(priceRow);
-					}
-				});
-				
-			}
+			});
 		}
 	}
 }

@@ -105,6 +105,8 @@ public class Database {
 		getSales(vg.getId());
 	}
 	
+	// TODO getSearchQuery and getSearchTimestamp can be merged and return a Search object or whatever
+	
 	public long getSearchTimestamp(VideoGame videoGame) {
 		String query = FileUtil.loadTextResource("/res/get_search.sql");
 		long timestamp = 0;
@@ -150,9 +152,6 @@ public class Database {
 			
 			if(resultSet.first()) {
 				queryString = resultSet.getString("query");
-				if(resultSet.next()) {
-					throwProductSearchIntegrityException(id);
-				}
 			}
 			
 			resultSet.close();
@@ -308,14 +307,31 @@ public class Database {
 		return sales;
 	}
 	
-	public void getGamesNotUpdatedSince(long unixtime) {
+	public List<Search> getSearchesOlderThan(long unixtime) {
+		List<Search> list = new ArrayList<Search>();
 		
-	}
-	
-	
-	private void throwProductSearchIntegrityException(int id) {
-		// Should never happen, but if it does, it would be a bad idea to continue normally.
-		log.error("This never needs to be more than one result! Bailing. videogames.search id={}", id);
-		throw new IllegalArgumentException("Should be a 1:0..1 relationship between videogames.product and videogames.search!");
+		String sql = FileUtil.loadTextResource("/res/get_searches_older_than.sql");
+		
+		try(Connection connection = DriverManager.getConnection(dbUrl, dbUser, dbPass);
+			PreparedStatement statement = connection.prepareStatement(sql);) {
+			
+			statement.setLong(1, unixtime);
+			
+			try(ResultSet resultSet = statement.executeQuery();) {
+				while(resultSet.next()) {
+					int productId = resultSet.getInt("product_id");
+					long timestamp = resultSet.getLong("timestamp");
+					String query = resultSet.getString("query");
+					
+					Search search = new Search(productId, timestamp, query);
+					list.add(search);
+				}
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return list;
 	}
 }

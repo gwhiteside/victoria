@@ -9,30 +9,15 @@ import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import javax.swing.JTextField;
 
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.text.DateFormat;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
-
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumn;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -51,18 +36,7 @@ import org.simmetrics.builders.StringMetricBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ebay.services.client.ClientConfig;
-import com.ebay.services.client.FindingServiceClientFactory;
-import com.ebay.services.finding.FindCompletedItemsRequest;
-import com.ebay.services.finding.FindCompletedItemsResponse;
-import com.ebay.services.finding.FindingServicePortType;
-import com.ebay.services.finding.PaginationInput;
-import com.ebay.services.finding.SortOrderType;
-
 import java.awt.Component;
-import java.awt.EventQueue;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -70,22 +44,9 @@ import java.awt.Insets;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.JPanel;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.JTextPane;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.JTextArea;
-import javax.swing.UIManager;
-import javax.swing.JCheckBox;
-import javax.swing.JButton;
-
-import java.awt.FlowLayout;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
 import javax.swing.JComboBox;
 
 /*
@@ -129,7 +90,7 @@ public class MainWindow {
 	
 	Logger log = LoggerFactory.getLogger(this.getClass());
 
-	Thread t;
+	BackgroundUpdater updater;
 	
 	/**
 	 * Create the application.
@@ -157,9 +118,8 @@ public class MainWindow {
 		//textSearch.setEnabled(false);
 		frame.setVisible(true);
 		
-		// TODO run background timer (run immediately then retrigger daily) to check database entries; anything older than, say, a month, gets updated
-		
-		
+		// background updater (runs immediately then retriggers daily) to check database entries; anything older than, say, a month, gets updated
+		updater = new BackgroundUpdater(database, ebay);
 	}
 
 	/**
@@ -286,6 +246,11 @@ public class MainWindow {
 				// serially to enforce sane program flow
 				
 				int row = tablePrice.getSelectedRow();
+				
+				if(row == -1) {
+					return;
+				}
+				
 				PriceRow priceRow = ((PriceTableModel)tablePrice.getModel()).getRow(row);
 				VideoGame vg = priceRow.getVideoGame();
 				
@@ -459,5 +424,6 @@ public class MainWindow {
 	
 	private void shutdown() {
 		log.info("Shutting down...");
+		updater.shutdown();
 	}
 }

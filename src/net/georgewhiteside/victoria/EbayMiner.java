@@ -55,6 +55,13 @@ public class EbayMiner {
 	 * @return
 	 */
 	public List<SearchItem> getSales(String searchString, long startDate, long endDate) {
+		List<SearchItem> searchResults = new ArrayList<SearchItem>();
+		
+		if(startDate >= endDate) {
+			log.error("getSales cannot accept startDate >= endDate\nsearch string: {}", searchString);
+			return searchResults;
+		}
+		
 		FindingServicePortType serviceClient = FindingServiceClientFactory.getServiceClient(clientConfig);
 		
 		FindCompletedItemsRequest request = new FindCompletedItemsRequest();
@@ -68,8 +75,6 @@ public class EbayMiner {
 		//request.getItemFilter().add(Filter.locatedIn("US", "JP", "CN", "TW", "TH", "TR", "HK", "SG")); // actually just easier to programmatically reject CA and AU
 		request.setBuyerPostalCode(postalCode);
 		
-		List<SearchItem> searchResults = new ArrayList<SearchItem>();
-
 		/*
 		for(int i = 0, totalPages = 1, pageNumber = 0; pageNumber < totalPages; i++) {
 			
