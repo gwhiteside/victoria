@@ -41,9 +41,10 @@ public class PriceTableModel extends AbstractTableModel {
 	final String TITLE = "Title";
 	final String SYSTEM = "System";
 	final String PRICE = "Price";
+	final String QUANTITY = "Quantity";
 	
 	List<PriceRow> rowData;
-	String[] columnLabels = {TITLE, SYSTEM, PRICE};
+	String[] columnLabels = {TITLE, SYSTEM, PRICE, QUANTITY};
 	
 	Random random = new Random();
 	Database database;
@@ -88,8 +89,20 @@ public class PriceTableModel extends AbstractTableModel {
 			case TITLE: return vg.getTitle();
 			case SYSTEM: return vg.getSystemName();
 			case PRICE: return priceRow.getPriceColumnString();
+			case QUANTITY: return priceRow.getQuantity();
 		}
 		return null;
+	}
+	
+	private int getColumnIndex(String label) {
+		int column = -1;
+		for(int i = 0; i < columnLabels.length; i++) {
+			if(columnLabels[i].equals(label)) {
+				column = i;
+				break;
+			}
+		}
+		return column;
 	}
 	
 	public PriceRow getRow(int index) {
@@ -108,20 +121,43 @@ public class PriceTableModel extends AbstractTableModel {
 		}
 	}
 	
+	/**
+	 * Finds the first row containing VideoGame vg
+	 * @param vg
+	 */
+	private int indexOf(VideoGame vg) {
+		int index = -1;
+
+		for(int i = 0; i < rowData.size(); i++) {
+			PriceRow priceRow = rowData.get(i);
+			if(priceRow.getVideoGame().equals(vg)) {
+				index = i;
+				break;
+			}
+		}
+			
+		return index;
+	}
+	
 	private void addRow(PriceRow priceRow) {
 		insertRow(getRowCount(), priceRow);
 	}
 	
 	public void addRow(VideoGame vg) {
-		PriceRow priceRow = new PriceRow(vg);
-		
-		addRow(priceRow);
-		
-		//new PriceRowUpdater(priceRow).execute();
+		int index = indexOf(vg);
+		if(index == -1) {
+			// row doesn't exist; create a new one
+			PriceRow priceRow = new PriceRow(vg);
+			addRow(priceRow);
+		} else {
+			// increment the existing row
+			PriceRow priceRow = getRow(index);
+			priceRow.incrementQuantity();
+			fireCellUpdated(priceRow, QUANTITY);
+		}
 	}
 	
 	private void insertRow(int index, PriceRow priceRow) {
-		//updateRowAsync(priceRow); // something something asynchronously load data
 		rowData.add(index, priceRow);
 		fireTableRowsInserted(index, index);
 	}
@@ -134,25 +170,15 @@ public class PriceTableModel extends AbstractTableModel {
 	public double getPriceTotal() {
 		double total = 0;
 		for(PriceRow row : rowData) {
-			total += row.getPrice();
+			total += row.getPrice() * row.getQuantity();
 		}
 		return total;
 	}
 	
-	protected void firePriceUpdated(PriceRow matchingRow) {
-		/*
-		int i = 0;
-		int matchingRowId = matchingRow.getVideoGame().getId();
-    	for(PriceRow x : rowData) {
-    		if(x.getVideoGame().getId() == matchingRowId) {
-    			fireTableCellUpdated(i, 2);
-    		}
-    		i++;
-    	}
-    	*/
-		
-		int i = rowData.indexOf(matchingRow);
-		fireTableCellUpdated(i, 2);
+	protected void fireCellUpdated(PriceRow matchingRow, String column) {
+		int iRow = rowData.indexOf(matchingRow);
+		int iCol = getColumnIndex(column);
+		fireTableCellUpdated(iRow, iCol);
 	}
 	
 	protected void fireRowUpdated(PriceRow matchingRow) {
@@ -168,15 +194,21 @@ public class PriceTableModel extends AbstractTableModel {
 		VideoGame videoGame;
 		String priceColumnString;
 		double price;
+		int quantity;
 		boolean needsQuery = false;
 		
-		public PriceRow(VideoGame vg) {
+		public PriceRow(VideoGame vg, int quantity) {
 			videoGame = vg;
+			setQuantity(quantity);
 			update();
 		}
 		
+		public PriceRow(VideoGame vg) {
+			this(vg, 1);
+		}
+		
 		public void firePriceUpdate() {
-			firePriceUpdated(this);
+			fireCellUpdated(this, PRICE);
 		}
 		
 		public VideoGame getVideoGame() { return videoGame; }
@@ -193,6 +225,18 @@ public class PriceTableModel extends AbstractTableModel {
 		
 		public void setPrice(double p) {
 			price = p;
+		}
+		
+		public int getQuantity() {
+			return quantity;
+		}
+		
+		public void setQuantity(int quantity) {
+			this.quantity = quantity;
+		}
+		
+		public void incrementQuantity() {
+			quantity++;
 		}
 		
 		public void update() {
