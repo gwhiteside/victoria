@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 import com.ebay.services.client.ClientConfig;
 import com.ebay.services.client.FindingServiceClientFactory;
 import com.ebay.services.finding.AckValue;
+import com.ebay.services.finding.ErrorData;
+import com.ebay.services.finding.ErrorMessage;
+import com.ebay.services.finding.ErrorSeverity;
 import com.ebay.services.finding.FindCompletedItemsRequest;
 import com.ebay.services.finding.FindCompletedItemsResponse;
 import com.ebay.services.finding.FindingServicePortType;
@@ -92,6 +95,8 @@ public class EbayMiner {
 			
 			logResponseAck(response.getAck());
 			
+			logErrorMessage(response.getErrorMessage());
+			
 			searchResults.addAll(response.getSearchResult().getItem());
 			
 			PaginationOutput pagination = response.getPaginationOutput();
@@ -143,6 +148,28 @@ public class EbayMiner {
 		default:
 			log.warn(responseString, ack);
 			break;
+		}
+	}
+	
+	private void logErrorMessage(ErrorMessage em) {
+		if(em == null) {
+			return;
+		}
+		List<ErrorData> edlist = em.getError();
+		Iterator<ErrorData> iter = edlist.iterator();
+		while(iter.hasNext()) {
+			ErrorData ed = iter.next();
+			String message = ed.getMessage();
+			ErrorSeverity errorSeverity = ed.getSeverity();
+			switch(errorSeverity) {
+				case WARNING:
+					log.warn("eBay API WARNING: {}", message);
+					break;
+				case ERROR: // intentional fall-through
+				default:
+					log.error("eBay API ERROR: {}", message);
+					break;
+			}
 		}
 	}
 	
