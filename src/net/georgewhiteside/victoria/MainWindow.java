@@ -45,6 +45,8 @@ import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.JComboBox;
@@ -248,10 +250,6 @@ public class MainWindow {
 				
 				int rowIndex = tablePrice.getSelectedRow();
 				
-				if(rowIndex == -1) {
-					return;
-				}
-				
 				PriceRow priceRow = ((PriceTableModel)tablePrice.getModel()).getRow(rowIndex);
 				VideoGame vg = priceRow.getVideoGame();
 				
@@ -280,16 +278,36 @@ public class MainWindow {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				int rowIndex = tablePrice.getSelectedRow();
-				
-				if(rowIndex == -1) {
-					return;
-				}
-				
 				PriceTableModel model = (PriceTableModel) tablePrice.getModel();
 				model.removeRow(rowIndex);
 			}
 		});
 		popupMenu.add(removeItem);
+		
+		popupMenu.addPopupMenuListener(new PopupMenuListener() {
+			@Override
+			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+				int rowIndex = tablePrice.getSelectedRow();
+				
+				if(rowIndex == -1) {
+					editQueryItem.setEnabled(false);
+					removeItem.setEnabled(false);
+				} else {
+					editQueryItem.setEnabled(true);
+					removeItem.setEnabled(true);
+				}
+			}
+
+			@Override
+			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+				
+			}
+
+			@Override
+			public void popupMenuCanceled(PopupMenuEvent e) {
+				
+			}
+		});
 		
 		tablePrice.setComponentPopupMenu(popupMenu);
 		JScrollPane scrollPrice = new JScrollPane(tablePrice);
