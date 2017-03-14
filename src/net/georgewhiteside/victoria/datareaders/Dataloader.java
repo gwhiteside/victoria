@@ -1,6 +1,8 @@
 package net.georgewhiteside.victoria.datareaders;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -21,9 +23,9 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class Dataloader {
 	
-	static final String DB_URL = "jdbc:mysql://localhost:3306/videogames";
-	static final String DB_USER = "VGINA";
-	static final String DB_PASS = "vgina";
+	static final String DB_URL = "jdbc:mysql://basementserv:3306/videogames";
+	static final String DB_USER = "victoria";
+	static final String DB_PASS = "victoria";
 	
 	static Connection connection;
 	static PreparedStatement stmtInsertProduct;
@@ -33,16 +35,69 @@ public class Dataloader {
 		try {
 			connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 			stmtInsertProduct = connection.prepareStatement(
-				"INSERT INTO product (name, year, system_id, region)" + '\n' +
+				"INSERT INTO product (title, year, system_id, region)" + '\n' +
 				"VALUES(?, ?, ?, ?);"
 			);
 			
-			
+			n64();
 			
 			connection.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} 
+		}
+	}
+	
+	public static void n64() {
+		String file = "nintendo64games.csv";
+		boolean doRollback = false;
+		int failCount = 0;
+		
+		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+			String row;
+			
+			connection.setAutoCommit(false);
+			
+			while((row = reader.readLine()) != null) {
+				String[] columns = row.split(";");
+				
+				String title = columns[0];
+				String year = columns[1];
+				String region = "usa";
+				
+				stmtInsertProduct.setString(1, title);
+				stmtInsertProduct.setString(2, year);
+				stmtInsertProduct.setInt(3, 47);
+				stmtInsertProduct.setString(4, region);
+				
+				int rows = stmtInsertProduct.executeUpdate();
+				
+				if(rows < 1) {
+					doRollback = true;
+					failCount++;
+					System.out.println("failed: " + title + " -- " + year);
+				}
+			}
+			
+			stmtInsertProduct.close();
+			
+			if(doRollback) {
+				System.out.println("" + failCount + " failures");
+				System.out.println("Rolling back database changes...");
+				connection.rollback();
+			} else {
+				System.out.println("Committing database changes");
+				connection.commit();
+				connection.setAutoCommit(true);
+			}
+			
+			connection.close();
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+		
 	}
 	
 	public static void sfc() {

@@ -51,7 +51,7 @@ public class BackgroundUpdater {
 				if(searchString == null || searchString.length() == 0) {
 					log.warn("Item id {} search string is null or length 0", search.getProductId());
 				} else {
-					long currentUnixTime = System.currentTimeMillis() / 1000;
+					long currentUnixTime = System.currentTimeMillis() / 1000 - 2; // HACK subtracting two from current time to compensate for apparent eBay server time drift or api bug
 					long lastUpdateUnixTime = search.getTimestamp();
 					List<SearchItem> searchItems = ebay.getSales(searchString, lastUpdateUnixTime, currentUnixTime);
 					

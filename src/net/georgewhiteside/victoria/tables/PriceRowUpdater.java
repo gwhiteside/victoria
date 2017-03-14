@@ -46,7 +46,7 @@ public class PriceRowUpdater extends SwingWorker<String, String> {
 		final VideoGame vg = priceRow.getVideoGame();
 		
 		long lastUpdateUnixTime = database.getSearchTimestamp(vg);
-		long currentUnixTime = System.currentTimeMillis() / 1000;
+		long currentUnixTime = System.currentTimeMillis() / 1000 - 2; // HACK subtracting two from current time to compensate for apparent eBay server time drift or api bug
 		long secondsSinceUpdate = currentUnixTime - lastUpdateUnixTime;
     	int daysSinceUpdate = (int) TimeUnit.SECONDS.toDays(secondsSinceUpdate);
     	
