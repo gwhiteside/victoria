@@ -24,6 +24,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.DocumentFilter;
 
+import net.georgewhiteside.swing.event.PopupMenuAdapter;
 import net.georgewhiteside.victoria.tables.PriceTableModel;
 import net.georgewhiteside.victoria.tables.PriceTableModel.PriceRow;
 import net.georgewhiteside.victoria.tables.SearchRow;
@@ -284,7 +285,7 @@ public class MainWindow {
 		});
 		popupMenu.add(removeItem);
 		
-		popupMenu.addPopupMenuListener(new PopupMenuListener() {
+		popupMenu.addPopupMenuListener(new PopupMenuAdapter() {
 			@Override
 			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
 				int rowIndex = tablePrice.getSelectedRow();
@@ -296,16 +297,6 @@ public class MainWindow {
 					editQueryItem.setEnabled(true);
 					removeItem.setEnabled(true);
 				}
-			}
-
-			@Override
-			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-				
-			}
-
-			@Override
-			public void popupMenuCanceled(PopupMenuEvent e) {
-				
 			}
 		});
 		
