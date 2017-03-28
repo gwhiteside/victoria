@@ -289,6 +289,7 @@ public class MainWindow {
 			@Override
 			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
 				int rowIndex = tablePrice.getSelectedRow();
+				//tablePrice.getSe
 				
 				if(rowIndex == -1) {
 					editQueryItem.setEnabled(false);

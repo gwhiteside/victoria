@@ -39,11 +39,115 @@ public class Dataloader {
 				"VALUES(?, ?, ?, ?);"
 			);
 			
-			n64();
+			gameboy();
 			
 			connection.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
+		}
+	}
+	
+	public static void gameboy() {
+		String file = "gameboygames.csv";
+		boolean doRollback = false;
+		int failCount = 0;
+		
+		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+			String row;
+			
+			connection.setAutoCommit(false);
+			
+			while((row = reader.readLine()) != null) {
+				String[] columns = row.split(";");
+				
+				String title = columns[0];
+				String year = columns[2];
+				String region = "usa";
+				
+				stmtInsertProduct.setString(1, title);
+				stmtInsertProduct.setString(2, year);
+				stmtInsertProduct.setInt(3, 76);
+				stmtInsertProduct.setString(4, region);
+				
+				int rows = stmtInsertProduct.executeUpdate();
+				
+				if(rows < 1) {
+					doRollback = true;
+					failCount++;
+					System.out.println("failed: " + title + " -- " + year);
+				}
+			}
+			
+			stmtInsertProduct.close();
+			
+			if(doRollback) {
+				System.out.println("" + failCount + " failures");
+				System.out.println("Rolling back database changes...");
+				connection.rollback();
+			} else {
+				System.out.println("Committing database changes");
+				connection.commit();
+				connection.setAutoCommit(true);
+			}
+			
+			connection.close();
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	public static void gameboycolor() {
+		String file = "gameboycolorgames.csv";
+		boolean doRollback = false;
+		int failCount = 0;
+		
+		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+			String row;
+			
+			connection.setAutoCommit(false);
+			
+			while((row = reader.readLine()) != null) {
+				String[] columns = row.split(";");
+				
+				String title = columns[0];
+				String year = columns[1];
+				String region = "usa";
+				
+				stmtInsertProduct.setString(1, title);
+				stmtInsertProduct.setString(2, year);
+				stmtInsertProduct.setInt(3, 77);
+				stmtInsertProduct.setString(4, region);
+				
+				int rows = stmtInsertProduct.executeUpdate();
+				
+				if(rows < 1) {
+					doRollback = true;
+					failCount++;
+					System.out.println("failed: " + title + " -- " + year);
+				}
+			}
+			
+			stmtInsertProduct.close();
+			
+			if(doRollback) {
+				System.out.println("" + failCount + " failures");
+				System.out.println("Rolling back database changes...");
+				connection.rollback();
+			} else {
+				System.out.println("Committing database changes");
+				connection.commit();
+				connection.setAutoCommit(true);
+			}
+			
+			connection.close();
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (SQLException e1) {
+			e1.printStackTrace();
 		}
 	}
 	

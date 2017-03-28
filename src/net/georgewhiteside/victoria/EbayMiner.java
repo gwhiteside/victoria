@@ -16,6 +16,8 @@ import com.ebay.services.finding.ErrorSeverity;
 import com.ebay.services.finding.FindCompletedItemsRequest;
 import com.ebay.services.finding.FindCompletedItemsResponse;
 import com.ebay.services.finding.FindingServicePortType;
+import com.ebay.services.finding.GetVersionRequest;
+import com.ebay.services.finding.GetVersionResponse;
 import com.ebay.services.finding.ItemFilter;
 import com.ebay.services.finding.ItemFilterType;
 import com.ebay.services.finding.PaginationInput;
@@ -40,6 +42,7 @@ public class EbayMiner {
 		clientConfig.setHttpHeaderLoggingEnabled(false);
 		clientConfig.setApplicationId(ebayAppId);
 		this.postalCode = postalCode;
+		getEbayTimeDifference();
 	}
 	
 	public void setIgnoreCountries(String... countries) {
@@ -123,6 +126,16 @@ public class EbayMiner {
 		}
 		
 		return searchResults;
+	}
+	
+	private long getEbayTimeDifference() {
+		long localTime = System.currentTimeMillis();
+		FindingServicePortType serviceClient = FindingServiceClientFactory.getServiceClient(clientConfig);
+		GetVersionResponse response = serviceClient.getVersion(new GetVersionRequest());
+		long ebayTime = response.getTimestamp().getTimeInMillis();
+		long difference = ebayTime - localTime;
+		log.warn("eBay server time difference: {}", difference);
+		return difference;
 	}
 	
 	private void logResponsePagination(PaginationOutput pagination) {
