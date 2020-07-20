@@ -33,7 +33,7 @@ public class JTableCustom extends JTable
 		setIntercellSpacing(new Dimension(0, getIntercellSpacing().height));
 		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		setShowGrid(false);
-		setTableHeader(null);
+		//setTableHeader(null);
 		
 		setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
 		    @Override

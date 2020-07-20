@@ -25,6 +25,8 @@ import org.slf4j.LoggerFactory;
 
 // indicate rising and falling prices with color or symbol (help spot/avoid temporary fad price inflations)
 
+// save/load game auction sets
+
 public class Main
 {
 	static Logger logger = LoggerFactory.getLogger(Main.class);

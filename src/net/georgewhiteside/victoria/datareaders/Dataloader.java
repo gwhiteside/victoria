@@ -23,7 +23,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class Dataloader {
 	
-	static final String DB_URL = "jdbc:mysql://basementserv:3306/videogames";
+	static final String DB_URL = "jdbc:mysql://localhost:3306/videogames";
 	static final String DB_USER = "victoria";
 	static final String DB_PASS = "victoria";
 	
@@ -39,7 +39,7 @@ public class Dataloader {
 				"VALUES(?, ?, ?, ?);"
 			);
 			
-			gameboy();
+			n64();
 			
 			connection.close();
 		} catch (SQLException e) {

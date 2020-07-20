@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.Component;
+import java.awt.FontMetrics;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -50,6 +51,7 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.TableColumn;
 import javax.swing.JComboBox;
 
 /*
@@ -110,7 +112,7 @@ public class MainWindow {
 		database = new Database(dbUrl, dbUser, dbPass);
 		
 		ebay = new EbayMiner(config.getProperty(Config.EBAY_APP_ID), config.getProperty(Config.POSTAL_CODE));
-		ebay.setIgnoreCountries("CA", "AU"); // shipping charges suck for Canada and Australia
+		ebay.setIgnoreCountries("CA", "AU", "CN", "HK"); // shipping charges suck for Canada and Australia... China and Hong Kong are lousy with reproductions
 		
 		stringMetric = StringMetricBuilder
 			.with(new JaroWinkler())
@@ -227,6 +229,26 @@ public class MainWindow {
 		gbc_scrollSearch.gridx = 0;
 		gbc_scrollSearch.gridy = 2;
 		panel.add(scrollSearch, gbc_scrollSearch);
+		
+		/* some quick (and brittle) search table sizing tweaks */
+
+		FontMetrics fontMetrics = tableSearch.getFontMetrics(tableSearch.getFont());
+		Insets insets = tableSearch.getInsets();
+
+		System.out.println("Insets: " + insets);
+
+		TableColumn column = tableSearch.getColumnModel().getColumn(2);
+		int maxWidth = fontMetrics.stringWidth("100% ");
+		column.setMinWidth(0);
+		column.setMaxWidth(insets.left + maxWidth + insets.right);
+		column.setPreferredWidth(column.getMaxWidth());
+
+		column = tableSearch.getColumnModel().getColumn(1);
+		maxWidth = fontMetrics.stringWidth("Sega Master System"); // approximately the longest string in this column
+		column.setMinWidth(0);
+		column.setMaxWidth(insets.left + maxWidth + insets.right);
+		column.setPreferredWidth(column.getMaxWidth());
+		/**/
 		
 		
 		
